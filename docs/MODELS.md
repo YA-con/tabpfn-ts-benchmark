@@ -118,3 +118,14 @@ results/tabpfn_ts_pilot/report.html
 
 This pilot verifies the full path from local checkpoint to GPU inference and
 HTML reporting before scaling TabPFN-TS to longer contexts and more series.
+
+The current recommended expanded pilot uses five series when available:
+
+```bash
+export TABPFN_TS_MAX_SERIES=5
+export TABPFN_TS_OUTPUT_DIR=results/tabpfn_ts_pilot_s5
+python -B -m experiments.e0_tabpfn_ts_pilot
+```
+
+In this run TabPFN-TS ranked first on both `synthetic_energy` and
+`stock_provided` under the controlled short-context setup.

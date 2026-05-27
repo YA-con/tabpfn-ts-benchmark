@@ -140,7 +140,7 @@ def main() -> None:
     """Run a small TabPFN-TS pilot and generate report artifacts."""
 
     project_root = Path(__file__).resolve().parents[1]
-    output_dir = project_root / "results" / "tabpfn_ts_pilot"
+    output_dir = project_root / os.environ.get("TABPFN_TS_OUTPUT_DIR", "results/tabpfn_ts_pilot")
     output_dir.mkdir(parents=True, exist_ok=True)
     run_id = time.strftime("tabpfn_ts_%Y%m%d_%H%M%S")
     max_series = int(os.environ.get("TABPFN_TS_MAX_SERIES", "1"))
