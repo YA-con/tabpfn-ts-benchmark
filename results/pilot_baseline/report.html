@@ -1,0 +1,242 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<title>TabPFN-TS Pilot Results</title>
+<style>
+body { margin: 0; font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  background: #f8fafc; color: #0f172a; }
+header { padding: 34px 44px 22px; background: #0f172a; color: white; }
+h1 { margin: 0; font-size: 34px; letter-spacing: 0; }
+.subtitle { margin-top: 8px; color: #cbd5e1; max-width: 880px; }
+.grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; padding: 20px 44px; }
+.stat { background: white; border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px; }
+.stat b { display: block; font-size: 24px; margin-top: 6px; }
+section { padding: 12px 44px 26px; }
+.panel { background: white; border: 1px solid #e2e8f0; border-radius: 8px; padding: 18px; margin-bottom: 18px; }
+.chart { width: 100%; height: auto; }
+.title { font-size: 18px; font-weight: 700; fill: #0f172a; }
+.axis { font-size: 13px; fill: #475569; }
+.center { text-anchor: middle; }
+.value { font-size: 13px; fill: #334155; }
+.cell { text-anchor: middle; font-size: 14px; font-weight: 700; fill: #0f172a; }
+.gallery { display: grid; grid-template-columns: repeat(2, minmax(260px, 1fr)); gap: 14px; }
+.mini { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; width: 100%; }
+.mini-title { font-size: 14px; font-weight: 700; fill: #0f172a; }
+.mini-sub { font-size: 11px; fill: #64748b; }
+table { border-collapse: collapse; width: 100%; font-size: 13px; }
+th, td { border-bottom: 1px solid #e2e8f0; padding: 9px 8px; text-align: right; }
+th:first-child, td:first-child { text-align: left; }
+th { color: #475569; }
+</style>
+</head>
+<body>
+<header>
+  <h1>TabPFN-TS Pilot Results</h1>
+  <div class="subtitle">CPU-only pilot run across synthetic cross-domain sanity datasets and a provided finance sample. This is the report scaffold that later full benchmark runs will reuse.</div>
+</header>
+<div class="grid">
+  <div class="stat">Datasets<b>5</b></div>
+  <div class="stat">Domains<b>economics, energy, finance, traffic, weather</b></div>
+  <div class="stat">Best SMAPE<b>seasonal_naive | 1.358</b></div>
+</div>
+<section>
+  <div class="panel"><svg viewBox="0 0 760 158" class="chart"><text x="20" y="24" class="title">Average SMAPE by model</text><text x="20" y="67" class="axis">seasonal_naive</text><rect x="170" y="46" width="181.8" height="26" rx="4" fill="#0f766e"></rect><text x="359.8" y="65" class="value">6.8365</text><text x="20" y="111" class="axis">dummy_mean</text><rect x="170" y="90" width="550.0" height="26" rx="4" fill="#7c3aed"></rect><text x="728.0" y="109" class="value">20.6820</text></svg></div>
+  <div class="panel"><svg viewBox="0 0 794 210" class="chart"><text x="20" y="24" class="title">SMAPE heatmap</text><text x="199.0" y="48" class="axis center">economics</text><text x="325.0" y="48" class="axis center">energy</text><text x="451.0" y="48" class="axis center">finance</text><text x="577.0" y="48" class="axis center">traffic</text><text x="703.0" y="48" class="axis center">weather</text><text x="20" y="92" class="axis">dummy_mean</text><rect x="136" y="58" width="118" height="50" rx="6" fill="rgb(38,154,214)"></rect><text x="195.0" y="89" class="cell">50.722</text><rect x="262" y="58" width="118" height="50" rx="6" fill="rgb(185,221,240)"></rect><text x="321.0" y="89" class="cell">16.156</text><rect x="388" y="58" width="118" height="50" rx="6" fill="rgb(245,248,251)"></rect><text x="447.0" y="89" class="cell">1.924</text><rect x="514" y="58" width="118" height="50" rx="6" fill="rgb(181,219,239)"></rect><text x="573.0" y="89" class="cell">17.105</text><rect x="640" y="58" width="118" height="50" rx="6" fill="rgb(179,218,239)"></rect><text x="699.0" y="89" class="cell">17.503</text><text x="20" y="150" class="axis">seasonal_naive</text><rect x="136" y="116" width="118" height="50" rx="6" fill="rgb(248,250,252)"></rect><text x="195.0" y="147" class="cell">1.358</text><rect x="262" y="116" width="118" height="50" rx="6" fill="rgb(240,246,250)"></rect><text x="321.0" y="147" class="cell">3.182</text><rect x="388" y="116" width="118" height="50" rx="6" fill="rgb(245,248,251)"></rect><text x="447.0" y="147" class="cell">1.977</text><rect x="514" y="116" width="118" height="50" rx="6" fill="rgb(243,248,251)"></rect><text x="573.0" y="147" class="cell">2.321</text><rect x="640" y="116" width="118" height="50" rx="6" fill="rgb(145,203,233)"></rect><text x="699.0" y="147" class="cell">25.344</text></svg></div>
+  <div class="panel"><h2>Forecast Gallery</h2><div class="gallery"><svg viewBox="0 0 360 190" class="mini"><text x="18" y="22" class="mini-title">synthetic_energy | dummy_mean</text><text x="18" y="40" class="mini-sub">energy_0</text><polyline points="32.0,100.9 44.9,83.4 57.7,67.0 70.6,52.8 83.5,41.9 96.3,34.8 109.2,32.0 122.1,33.7 135.0,39.8 147.8,49.7 160.7,62.8 173.6,78.1 186.4,94.6 199.3,111.1 212.2,126.4 225.0,139.5 237.9,149.5 250.8,155.5 263.7,157.2 276.5,154.4 289.4,147.3 302.3,136.4 315.1,122.2 328.0,105.8" fill="none" stroke="#111827" stroke-width="2.2"/><polyline points="32.0,158.0 44.9,158.0 57.7,158.0 70.6,158.0 83.5,158.0 96.3,158.0 109.2,158.0 122.1,158.0 135.0,158.0 147.8,158.0 160.7,158.0 173.6,158.0 186.4,158.0 199.3,158.0 212.2,158.0 225.0,158.0 237.9,158.0 250.8,158.0 263.7,158.0 276.5,158.0 289.4,158.0 302.3,158.0 315.1,158.0 328.0,158.0" fill="none" stroke="#7c3aed" stroke-width="2.2"/><line x1="32" y1="158" x2="328" y2="158" stroke="#cbd5e1"/></svg><svg viewBox="0 0 360 190" class="mini"><text x="18" y="22" class="mini-title">synthetic_energy | dummy_mean</text><text x="18" y="40" class="mini-sub">energy_1</text><polyline points="32.0,100.9 44.9,83.4 57.7,67.0 70.6,52.8 83.5,41.9 96.3,34.8 109.2,32.0 122.1,33.7 135.0,39.8 147.8,49.7 160.7,62.8 173.6,78.1 186.4,94.6 199.3,111.1 212.2,126.4 225.0,139.5 237.9,149.5 250.8,155.5 263.7,157.2 276.5,154.4 289.4,147.3 302.3,136.4 315.1,122.2 328.0,105.8" fill="none" stroke="#111827" stroke-width="2.2"/><polyline points="32.0,158.0 44.9,158.0 57.7,158.0 70.6,158.0 83.5,158.0 96.3,158.0 109.2,158.0 122.1,158.0 135.0,158.0 147.8,158.0 160.7,158.0 173.6,158.0 186.4,158.0 199.3,158.0 212.2,158.0 225.0,158.0 237.9,158.0 250.8,158.0 263.7,158.0 276.5,158.0 289.4,158.0 302.3,158.0 315.1,158.0 328.0,158.0" fill="none" stroke="#7c3aed" stroke-width="2.2"/><line x1="32" y1="158" x2="328" y2="158" stroke="#cbd5e1"/></svg><svg viewBox="0 0 360 190" class="mini"><text x="18" y="22" class="mini-title">synthetic_energy | dummy_mean</text><text x="18" y="40" class="mini-sub">energy_2</text><polyline points="32.0,100.9 44.9,83.4 57.7,67.0 70.6,52.8 83.5,41.9 96.3,34.8 109.2,32.0 122.1,33.7 135.0,39.8 147.8,49.7 160.7,62.8 173.6,78.1 186.4,94.6 199.3,111.1 212.2,126.4 225.0,139.5 237.9,149.5 250.8,155.5 263.7,157.2 276.5,154.4 289.4,147.3 302.3,136.4 315.1,122.2 328.0,105.8" fill="none" stroke="#111827" stroke-width="2.2"/><polyline points="32.0,158.0 44.9,158.0 57.7,158.0 70.6,158.0 83.5,158.0 96.3,158.0 109.2,158.0 122.1,158.0 135.0,158.0 147.8,158.0 160.7,158.0 173.6,158.0 186.4,158.0 199.3,158.0 212.2,158.0 225.0,158.0 237.9,158.0 250.8,158.0 263.7,158.0 276.5,158.0 289.4,158.0 302.3,158.0 315.1,158.0 328.0,158.0" fill="none" stroke="#7c3aed" stroke-width="2.2"/><line x1="32" y1="158" x2="328" y2="158" stroke="#cbd5e1"/></svg><svg viewBox="0 0 360 190" class="mini"><text x="18" y="22" class="mini-title">synthetic_energy | seasonal_naive</text><text x="18" y="40" class="mini-sub">energy_0</text><polyline points="32.0,95.0 44.9,79.0 57.7,64.0 70.6,51.0 83.5,41.0 96.3,34.5 109.2,32.0 122.1,33.6 135.0,39.1 147.8,48.2 160.7,60.1 173.6,74.2 186.4,89.2 199.3,104.3 212.2,118.3 225.0,130.3 237.9,139.4 250.8,144.9 263.7,146.5 276.5,143.9 289.4,137.4 302.3,127.4 315.1,114.5 328.0,99.5" fill="none" stroke="#111827" stroke-width="2.2"/><polyline points="32.0,106.5 44.9,90.5 57.7,75.5 70.6,62.6 83.5,52.6 96.3,46.1 109.2,43.5 122.1,45.1 135.0,50.6 147.8,59.7 160.7,71.7 173.6,85.7 186.4,100.8 199.3,115.8 212.2,129.9 225.0,141.8 237.9,150.9 250.8,156.4 263.7,158.0 276.5,155.5 289.4,149.0 302.3,139.0 315.1,126.0 328.0,111.0" fill="none" stroke="#0f766e" stroke-width="2.2"/><line x1="32" y1="158" x2="328" y2="158" stroke="#cbd5e1"/></svg></div></div>
+  <div class="panel"><h2>Metric Table</h2><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th>run_id</th>
+      <th>model</th>
+      <th>dataset</th>
+      <th>domain</th>
+      <th>horizon</th>
+      <th>context_length</th>
+      <th>mse</th>
+      <th>mae</th>
+      <th>rmse</th>
+      <th>smape</th>
+      <th>wape</th>
+      <th>mase</th>
+      <th>train_time_s</th>
+      <th>inference_time_s</th>
+      <th>gpu_memory_mb</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>pilot_20260527_090209</td>
+      <td>dummy_mean</td>
+      <td>synthetic_energy</td>
+      <td>energy</td>
+      <td>24</td>
+      <td>168</td>
+      <td>8.52438</td>
+      <td>2.40000</td>
+      <td>2.91965</td>
+      <td>16.15595</td>
+      <td>15.43408</td>
+      <td>5.61025</td>
+      <td>0.00053</td>
+      <td>0.00470</td>
+      <td>0.0</td>
+    </tr>
+    <tr>
+      <td>pilot_20260527_090209</td>
+      <td>seasonal_naive</td>
+      <td>synthetic_energy</td>
+      <td>energy</td>
+      <td>24</td>
+      <td>168</td>
+      <td>0.23040</td>
+      <td>0.48000</td>
+      <td>0.48000</td>
+      <td>3.18241</td>
+      <td>3.08682</td>
+      <td>1.12205</td>
+      <td>0.00039</td>
+      <td>0.00448</td>
+      <td>0.0</td>
+    </tr>
+    <tr>
+      <td>pilot_20260527_090209</td>
+      <td>dummy_mean</td>
+      <td>synthetic_traffic</td>
+      <td>traffic</td>
+      <td>24</td>
+      <td>168</td>
+      <td>39.85244</td>
+      <td>5.62504</td>
+      <td>6.31288</td>
+      <td>17.10452</td>
+      <td>16.89145</td>
+      <td>4.01784</td>
+      <td>0.00044</td>
+      <td>0.00430</td>
+      <td>0.0</td>
+    </tr>
+    <tr>
+      <td>pilot_20260527_090209</td>
+      <td>seasonal_naive</td>
+      <td>synthetic_traffic</td>
+      <td>traffic</td>
+      <td>24</td>
+      <td>168</td>
+      <td>0.68268</td>
+      <td>0.68364</td>
+      <td>0.82624</td>
+      <td>2.32121</td>
+      <td>2.05291</td>
+      <td>0.48831</td>
+      <td>0.00039</td>
+      <td>0.00448</td>
+      <td>0.0</td>
+    </tr>
+    <tr>
+      <td>pilot_20260527_090209</td>
+      <td>dummy_mean</td>
+      <td>synthetic_weather</td>
+      <td>weather</td>
+      <td>144</td>
+      <td>1008</td>
+      <td>12.65170</td>
+      <td>3.19035</td>
+      <td>3.55692</td>
+      <td>17.50319</td>
+      <td>17.24513</td>
+      <td>22.11484</td>
+      <td>0.00054</td>
+      <td>0.00345</td>
+      <td>0.0</td>
+    </tr>
+    <tr>
+      <td>pilot_20260527_090209</td>
+      <td>seasonal_naive</td>
+      <td>synthetic_weather</td>
+      <td>weather</td>
+      <td>144</td>
+      <td>1008</td>
+      <td>37.62012</td>
+      <td>4.98011</td>
+      <td>6.13352</td>
+      <td>25.34409</td>
+      <td>26.91954</td>
+      <td>34.52112</td>
+      <td>0.00048</td>
+      <td>0.00369</td>
+      <td>0.0</td>
+    </tr>
+    <tr>
+      <td>pilot_20260527_090209</td>
+      <td>dummy_mean</td>
+      <td>synthetic_exchange</td>
+      <td>economics</td>
+      <td>7</td>
+      <td>365</td>
+      <td>4.41194</td>
+      <td>2.10000</td>
+      <td>2.10046</td>
+      <td>50.72220</td>
+      <td>40.46243</td>
+      <td>51.63611</td>
+      <td>0.00049</td>
+      <td>0.00451</td>
+      <td>0.0</td>
+    </tr>
+    <tr>
+      <td>pilot_20260527_090209</td>
+      <td>seasonal_naive</td>
+      <td>synthetic_exchange</td>
+      <td>economics</td>
+      <td>7</td>
+      <td>365</td>
+      <td>0.00490</td>
+      <td>0.07000</td>
+      <td>0.07000</td>
+      <td>1.35803</td>
+      <td>1.34875</td>
+      <td>1.72120</td>
+      <td>0.00043</td>
+      <td>0.00461</td>
+      <td>0.0</td>
+    </tr>
+    <tr>
+      <td>pilot_20260527_090209</td>
+      <td>dummy_mean</td>
+      <td>stock_provided_sample</td>
+      <td>finance</td>
+      <td>24</td>
+      <td>240</td>
+      <td>0.09906</td>
+      <td>0.24519</td>
+      <td>0.31474</td>
+      <td>1.92433</td>
+      <td>1.42292</td>
+      <td>0.59730</td>
+      <td>0.00124</td>
+      <td>0.01131</td>
+      <td>0.0</td>
+    </tr>
+    <tr>
+      <td>pilot_20260527_090209</td>
+      <td>seasonal_naive</td>
+      <td>stock_provided_sample</td>
+      <td>finance</td>
+      <td>24</td>
+      <td>240</td>
+      <td>0.10451</td>
+      <td>0.23717</td>
+      <td>0.32328</td>
+      <td>1.97682</td>
+      <td>1.37634</td>
+      <td>0.57775</td>
+      <td>0.00112</td>
+      <td>0.01141</td>
+      <td>0.0</td>
+    </tr>
+  </tbody>
+</table></div>
+</section>
+</body>
+</html>
