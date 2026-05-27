@@ -125,16 +125,16 @@ def _bar_chart(metrics: pd.DataFrame, metric: str) -> str:
         .sort_values(metric, ascending=True)
         .reset_index(drop=True)
     )
-    width = 760
-    row_h = 44
-    left = 170
-    right = 40
+    width = 920
+    row_h = 46
+    left = 210
+    right = 92
     chart_w = width - left - right
-    height = 70 + row_h * len(grouped)
+    height = 78 + row_h * len(grouped)
     max_value = float(grouped[metric].max())
     rows = []
     for idx, row in grouped.iterrows():
-        y = 46 + idx * row_h
+        y = 52 + idx * row_h
         bar_w = _scale(float(row[metric]), 0.0, max_value, chart_w)
         color = PALETTE.get(str(row["model"]), "#334155")
         rows.append(
@@ -146,7 +146,8 @@ def _bar_chart(metrics: pd.DataFrame, metric: str) -> str:
         )
     return (
         f'<svg viewBox="0 0 {width} {height}" class="chart">'
-        f'<text x="20" y="24" class="title">各模型平均{escape(METRIC_LABELS.get(metric, metric.upper()))}</text>'
+        f'<text x="20" y="26" class="title">各模型平均{escape(METRIC_LABELS.get(metric, metric.upper()))}</text>'
+        f'<text x="20" y="46" class="axis">按平均误差从低到高排序</text>'
         + "".join(rows)
         + "</svg>"
     )
@@ -161,26 +162,26 @@ def _heatmap(metrics: pd.DataFrame, metric: str) -> str:
     values = pivot.to_numpy(dtype=float)
     min_v = float(pd.DataFrame(values).min().min())
     max_v = float(pd.DataFrame(values).max().max())
-    cell_w = 126
-    cell_h = 58
-    left = 136
-    top = 58
-    width = left + cell_w * len(domains) + 28
+    cell_w = 134
+    cell_h = 60
+    left = 188
+    top = 64
+    width = left + cell_w * len(domains) + 36
     legend_y = top + cell_h * len(models) + 22
     height = legend_y + 46
     pieces = [f'<svg viewBox="0 0 {width} {height}" class="chart">']
     pieces.append(
         f'<text x="20" y="24" class="title">{escape(METRIC_LABELS.get(metric, metric.upper()))} 领域热力图</text>'
     )
-    pieces.append('<text x="20" y="44" class="axis">颜色越深表示误差越高</text>')
+    pieces.append('<text x="20" y="46" class="axis">颜色越深表示误差越高；数值为该领域内平均 SMAPE</text>')
     for c, domain in enumerate(domains):
         pieces.append(
-            f'<text x="{left + c * cell_w + cell_w / 2}" y="48" class="axis center">'
+            f'<text x="{left + c * cell_w + cell_w / 2}" y="54" class="axis center">'
             f"{escape(_label_domain(domain))}</text>"
         )
     for r, model in enumerate(models):
         pieces.append(
-            f'<text x="20" y="{top + r * cell_h + 34}" class="axis">{escape(_label_model(model))}</text>'
+            f'<text x="20" y="{top + r * cell_h + 35}" class="axis">{escape(_label_model(model))}</text>'
         )
         for c, domain in enumerate(domains):
             value = float(pivot.loc[model, domain])
@@ -224,12 +225,12 @@ def _rank_bump_chart(metrics: pd.DataFrame) -> str:
     datasets = list(pivot.columns)
     ranks = pivot.rank(axis=0, method="min", ascending=True)
     models = list(ranks.index)
-    width = 880
-    height = 300
-    left = 110
-    right = 44
-    top = 58
-    bottom = 52
+    width = 1040
+    height = 360
+    left = 172
+    right = 72
+    top = 70
+    bottom = 74
     plot_w = width - left - right
     plot_h = height - top - bottom
     max_rank = max(1, len(models))
@@ -242,12 +243,13 @@ def _rank_bump_chart(metrics: pd.DataFrame) -> str:
 
     pieces = [f'<svg viewBox="0 0 {width} {height}" class="chart">']
     pieces.append('<text x="20" y="25" class="title">模型排名变化图（按数据集 SMAPE 排名）</text>')
-    pieces.append(f'<text x="{width - 104}" y="25" class="axis">1 = 最好</text>')
+    pieces.append(f'<text x="{width - 116}" y="25" class="axis">1 = 最好</text>')
+    pieces.append('<text x="20" y="47" class="axis">同一条线展示一个模型在不同数据集上的相对排名</text>')
     for idx, dataset in enumerate(datasets):
         x = x_pos(idx)
         pieces.append(f'<line x1="{x:.1f}" y1="{top}" x2="{x:.1f}" y2="{height - bottom}" stroke="#e2e8f0"/>')
         pieces.append(
-            f'<text x="{x:.1f}" y="{height - 18}" class="axis center">{escape(_label_dataset(dataset))}</text>'
+            f'<text x="{x:.1f}" y="{height - 28}" class="axis center">{escape(_label_dataset(dataset))}</text>'
         )
     for model in models:
         coords = []
@@ -261,7 +263,7 @@ def _rank_bump_chart(metrics: pd.DataFrame) -> str:
             f'<text x="20" y="{y_pos(first_rank) + 4:.1f}" class="axis">{escape(_label_model(model))}</text>'
         )
         pieces.append(
-            f'<text x="{width - 34}" y="{y_pos(last_rank) + 4:.1f}" class="axis">{int(last_rank)}</text>'
+            f'<text x="{width - 52}" y="{y_pos(last_rank) + 4:.1f}" class="axis">#{int(last_rank)}</text>'
         )
         for idx, dataset in enumerate(datasets):
             rank = float(ranks.loc[model, dataset])
@@ -275,12 +277,12 @@ def _rank_bump_chart(metrics: pd.DataFrame) -> str:
 def _error_scatter(metrics: pd.DataFrame) -> str:
     """Render MAE-vs-SMAPE scatter with domain colors and model labels."""
 
-    width = 780
-    height = 420
-    left = 64
-    right = 36
-    top = 48
-    bottom = 58
+    width = 900
+    height = 480
+    left = 78
+    right = 42
+    top = 68
+    bottom = 70
     plot_w = width - left - right
     plot_h = height - top - bottom
     min_x = float(metrics["mae"].min())
@@ -289,6 +291,7 @@ def _error_scatter(metrics: pd.DataFrame) -> str:
     max_y = float(metrics["smape"].max())
     pieces = [f'<svg viewBox="0 0 {width} {height}" class="chart">']
     pieces.append('<text x="20" y="25" class="title">误差空间图（MAE × SMAPE）</text>')
+    pieces.append('<text x="20" y="47" class="axis">越靠近左下角，整体误差越低</text>')
     pieces.append(f'<line x1="{left}" y1="{height - bottom}" x2="{width - right}" y2="{height - bottom}" stroke="#94a3b8"/>')
     pieces.append(f'<line x1="{left}" y1="{top}" x2="{left}" y2="{height - bottom}" stroke="#94a3b8"/>')
     pieces.append(f'<text x="{width / 2}" y="{height - 18}" class="axis center">MAE</text>')
@@ -432,12 +435,12 @@ def _actual_predicted_fit(predictions: pd.DataFrame, metrics: pd.DataFrame) -> s
         return ""
     if len(frame) > 900:
         frame = frame.sample(n=900, random_state=42)
-    width = 820
-    height = 480
-    left = 70
-    right = 32
-    top = 58
-    bottom = 104
+    width = 980
+    height = 560
+    left = 84
+    right = 42
+    top = 70
+    bottom = 116
     plot_w = width - left - right
     plot_h = height - top - bottom
     min_v = float(pd.concat([frame["y"], frame["y_hat"]]).min())
@@ -476,7 +479,7 @@ def _actual_predicted_fit(predictions: pd.DataFrame, metrics: pd.DataFrame) -> s
                 f'<line x1="{x1p}" y1="{y1p:.1f}" x2="{x2p}" y2="{y2p:.1f}" '
                 f'stroke="{color}" stroke-width="2.2"/>'
             )
-    pieces.append(_model_legend(models, left, height - 38, columns=3))
+    pieces.append(_model_legend(models, left, height - 42, columns=3))
     pieces.append("</svg>")
     return "".join(pieces)
 
@@ -490,12 +493,12 @@ def _residual_scatter(predictions: pd.DataFrame, metrics: pd.DataFrame) -> str:
     frame["residual"] = frame["y"] - frame["y_hat"]
     if len(frame) > 900:
         frame = frame.sample(n=900, random_state=7)
-    width = 820
-    height = 430
-    left = 70
-    right = 32
-    top = 54
-    bottom = 92
+    width = 980
+    height = 520
+    left = 84
+    right = 42
+    top = 70
+    bottom = 110
     plot_w = width - left - right
     plot_h = height - top - bottom
     min_x = float(frame["y_hat"].min())
@@ -516,7 +519,7 @@ def _residual_scatter(predictions: pd.DataFrame, metrics: pd.DataFrame) -> str:
         x = left + _scale(float(row["y_hat"]), min_x, max_x, plot_w)
         y = zero_y - _scale(float(row["residual"]), -max_abs, max_abs, plot_h) + plot_h / 2
         pieces.append(f'<circle cx="{x:.1f}" cy="{y:.1f}" r="2.6" fill="{color}" opacity="0.34"/>')
-    pieces.append(_model_legend(models, left, height - 28, columns=3))
+    pieces.append(_model_legend(models, left, height - 34, columns=3))
     pieces.append("</svg>")
     return "".join(pieces)
 
@@ -546,10 +549,10 @@ def _residual_boxplot(predictions: pd.DataFrame, metrics: pd.DataFrame) -> str:
         )
     if not stats:
         return ""
-    width = 840
+    width = 960
     row_h = 48
-    left = 190
-    right = 44
+    left = 220
+    right = 68
     top = 54
     bottom = 38
     plot_w = width - left - right
@@ -599,11 +602,11 @@ def _taylor_diagram(predictions: pd.DataFrame, metrics: pd.DataFrame) -> str:
         rows.append({"model": model, "corr": max(-1.0, min(1.0, corr)), "ratio": pred_std / true_std})
     if not rows:
         return ""
-    width = 520
-    height = 420
-    cx = 96
-    cy = 334
-    radius = 260
+    width = 720
+    height = 500
+    cx = 120
+    cy = 408
+    radius = 330
     max_ratio = max(1.6, max(row["ratio"] for row in rows) * 1.12)
     pieces = [f'<svg viewBox="0 0 {width} {height}" class="chart">']
     pieces.append('<text x="20" y="25" class="title">泰勒图（相关性 × 标准差比）</text>')
@@ -630,7 +633,7 @@ def _taylor_diagram(predictions: pd.DataFrame, metrics: pd.DataFrame) -> str:
             f'<circle cx="{x:.1f}" cy="{y:.1f}" r="7" fill="{color}">'
             f'<title>{escape(_label_model(row["model"]))} corr={row["corr"]:.3f}, std ratio={row["ratio"]:.3f}</title></circle>'
         )
-    pieces.append(_model_legend(models, 300, 88, columns=1))
+    pieces.append(_model_legend(models, 430, 96, columns=1))
     pieces.append("</svg>")
     return "".join(pieces)
 
@@ -644,11 +647,11 @@ def _radar_chart(metrics: pd.DataFrame) -> str:
         return ""
     grouped = metrics.groupby("model")[available].mean()
     models = _model_order(metrics)
-    width = 560
-    height = 430
-    cx = 210
-    cy = 220
-    radius = 142
+    width = 720
+    height = 500
+    cx = 260
+    cy = 258
+    radius = 166
     pieces = [f'<svg viewBox="0 0 {width} {height}" class="chart">']
     pieces.append('<text x="20" y="25" class="title">模型综合雷达图</text>')
     pieces.append('<text x="20" y="45" class="axis">所有指标已转成相对得分，越外圈越好</text>')
@@ -677,7 +680,7 @@ def _radar_chart(metrics: pd.DataFrame) -> str:
             coords.append(f"{cx + radius * score * math.cos(angle):.1f},{cy + radius * score * math.sin(angle):.1f}")
         color = PALETTE.get(model, "#334155")
         pieces.append(f'<polygon points="{" ".join(coords)}" fill="{color}" opacity="0.10" stroke="{color}" stroke-width="2"/>')
-    pieces.append(_model_legend(models, 382, 92, columns=1))
+    pieces.append(_model_legend(models, 500, 104, columns=1))
     pieces.append("</svg>")
     return "".join(pieces)
 
@@ -691,12 +694,12 @@ def _three_d_error_bars(metrics: pd.DataFrame) -> str:
         .sort_values("smape", ascending=False)
         .reset_index(drop=True)
     )
-    width = 880
-    height = 420
-    left = 62
-    base = 342
-    bar_w = 72
-    gap = 48
+    width = 980
+    height = 470
+    left = 76
+    base = 356
+    bar_w = 82
+    gap = 58
     depth = 18
     max_v = float(grouped["smape"].max())
     pieces = [f'<svg viewBox="0 0 {width} {height}" class="chart">']
@@ -719,8 +722,8 @@ def _three_d_error_bars(metrics: pd.DataFrame) -> str:
         )
         pieces.append(f'<text x="{x + bar_w / 2}" y="{y - 24:.1f}" class="value center">{float(row["smape"]):.2f}</text>')
         pieces.append(
-            f'<text x="{x + bar_w / 2}" y="{base + 22}" class="axis center">'
-            f'{escape(_label_model(row["model"]))}</text>'
+            f'<text transform="translate({x + bar_w / 2:.1f} {base + 30}) rotate(-22)" '
+            f'class="axis center">{escape(_label_model(row["model"]))}</text>'
         )
     pieces.append("</svg>")
     return "".join(pieces)
@@ -734,12 +737,12 @@ def _radial_error_bars(metrics: pd.DataFrame) -> str:
         return ""
     domains = sorted(metrics["domain"].unique())
     models = _model_order(metrics)
-    width = 720
-    height = 720
+    width = 860
+    height = 820
     cx = width / 2
-    cy = 360
-    inner = 92
-    outer = 276
+    cy = 400
+    inner = 108
+    outer = 318
     max_v = float((grouped["mean"] + grouped["std"].fillna(0.0)).max())
     pieces = [f'<svg viewBox="0 0 {width} {height}" class="chart">']
     pieces.append('<text x="24" y="28" class="title">环形分组柱状图（带误差棒）</text>')
@@ -781,7 +784,7 @@ def _radial_error_bars(metrics: pd.DataFrame) -> str:
                 f'x2="{xe + cap * math.cos(cap_angle):.1f}" y2="{ye + cap * math.sin(cap_angle):.1f}" '
                 f'stroke="{color}" stroke-width="1.5"/>'
             )
-    pieces.append(_model_legend(models, 110, 652, columns=3))
+    pieces.append(_model_legend(models, 148, 748, columns=3))
     pieces.append("</svg>")
     return "".join(pieces)
 
@@ -827,25 +830,31 @@ def build_pilot_report(
 <title>TabPFN-TS 初步实验结果</title>
 <style>
 body {{ margin: 0; font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  background: #f8fafc; color: #0f172a; }}
-header {{ padding: 34px 44px 22px; background: #0f172a; color: white; }}
+  background: #eef2f7; color: #0f172a; }}
+header {{ background: #0f172a; color: white; }}
+.hero {{ max-width: 1320px; margin: 0 auto; padding: 38px 36px 28px; }}
 h1 {{ margin: 0; font-size: 34px; letter-spacing: 0; }}
-.subtitle {{ margin-top: 8px; color: #cbd5e1; max-width: 880px; }}
-.grid {{ display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; padding: 20px 44px; }}
-.stat {{ background: white; border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px; }}
+h2 {{ margin: 10px 0 14px; font-size: 20px; letter-spacing: 0; }}
+.subtitle {{ margin-top: 8px; color: #cbd5e1; max-width: 920px; line-height: 1.6; }}
+.grid {{ display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; max-width: 1320px;
+  margin: 0 auto; padding: 20px 36px; }}
+.stat {{ background: white; border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04); }}
 .stat b {{ display: block; font-size: 24px; margin-top: 6px; }}
-section {{ padding: 12px 44px 26px; }}
-.panel {{ background: white; border: 1px solid #e2e8f0; border-radius: 8px; padding: 18px; margin-bottom: 18px; }}
-.chart {{ width: 100%; height: auto; }}
+section {{ max-width: 1320px; margin: 0 auto; padding: 12px 36px 34px; }}
+.panel {{ background: white; border: 1px solid #dbe3ee; border-radius: 8px; padding: 20px;
+  margin-bottom: 18px; overflow-x: auto; box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04); }}
+.chart {{ width: 100%; min-width: 680px; height: auto; display: block; }}
 .title {{ font-size: 18px; font-weight: 700; fill: #0f172a; }}
 .axis {{ font-size: 13px; fill: #475569; }}
 .center {{ text-anchor: middle; }}
 .end {{ text-anchor: end; }}
 .value {{ font-size: 13px; fill: #334155; }}
 .cell {{ text-anchor: middle; font-size: 14px; font-weight: 700; fill: #0f172a; }}
-.gallery {{ display: grid; grid-template-columns: repeat(2, minmax(260px, 1fr)); gap: 14px; }}
-.advanced-grid {{ display: grid; grid-template-columns: repeat(2, minmax(320px, 1fr)); gap: 18px; }}
+.gallery {{ display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 14px; }}
+.advanced-grid {{ display: grid; grid-template-columns: repeat(2, minmax(420px, 1fr)); gap: 18px; }}
 .advanced-grid .panel {{ margin-bottom: 0; }}
+.wide {{ grid-column: 1 / -1; }}
 .mini {{ background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; width: 100%; }}
 .mini-title {{ font-size: 14px; font-weight: 700; fill: #0f172a; }}
 .mini-sub {{ font-size: 11px; fill: #64748b; }}
@@ -860,12 +869,20 @@ table {{ border-collapse: collapse; width: 100%; font-size: 13px; }}
 th, td {{ border-bottom: 1px solid #e2e8f0; padding: 9px 8px; text-align: right; }}
 th:first-child, td:first-child {{ text-align: left; }}
 th {{ color: #475569; }}
+@media (max-width: 900px) {{
+  .hero, .grid, section {{ padding-left: 16px; padding-right: 16px; }}
+  .grid, .advanced-grid {{ grid-template-columns: 1fr; }}
+  .gallery {{ grid-template-columns: 1fr; }}
+  .chart {{ min-width: 620px; }}
+}}
 </style>
 </head>
 <body>
 <header>
+<div class="hero">
   <h1>TabPFN-TS 初步实验结果</h1>
   <div class="subtitle">CPU-only 初步实验，覆盖跨领域合成 sanity 数据集与现有金融样本。当前页面是后续完整 benchmark 的结果展示模板。</div>
+</div>
 </header>
 <div class="grid">
   <div class="stat">数据集数量<b>{metrics["dataset"].nunique()}</b></div>
@@ -882,13 +899,13 @@ th {{ color: #475569; }}
   <div class="panel"><h2>预测曲线样例</h2>{_forecast_gallery(predictions, metrics)}</div>
   <h2>高级诊断图</h2>
   <div class="advanced-grid">
-    <div class="panel">{_actual_predicted_fit(predictions, metrics)}</div>
-    <div class="panel">{_residual_scatter(predictions, metrics)}</div>
+    <div class="panel wide">{_actual_predicted_fit(predictions, metrics)}</div>
+    <div class="panel wide">{_residual_scatter(predictions, metrics)}</div>
     <div class="panel">{_residual_boxplot(predictions, metrics)}</div>
     <div class="panel">{_taylor_diagram(predictions, metrics)}</div>
     <div class="panel">{_radar_chart(metrics)}</div>
     <div class="panel">{_three_d_error_bars(metrics)}</div>
-    <div class="panel">{_radial_error_bars(metrics)}</div>
+    <div class="panel wide">{_radial_error_bars(metrics)}</div>
   </div>
   <div class="panel"><h2>指标明细表</h2>{display_metrics.round(5).to_html(index=False)}</div>
 </section>
