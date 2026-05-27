@@ -1,11 +1,24 @@
 """Dataset acquisition helpers.
 
 Large raw datasets should not be committed to git. This module records the public
-benchmark targets and leaves actual downloading/copying as an explicit operator
-step so that experiments stay reproducible.
+benchmark targets and downloads them explicitly into data/raw when requested.
 """
 
-from src.data.registry import list_dataset_specs
+from __future__ import annotations
+
+from pathlib import Path
+from urllib.request import urlretrieve
+
+from src.data.registry import get_dataset_spec, list_dataset_specs
+
+
+PUBLIC_BENCHMARK_URLS = {
+    "etth1": "https://huggingface.co/datasets/thuml/Time-Series-Library/resolve/main/ETT-small/ETTh1.csv",
+    "electricity": "https://huggingface.co/datasets/thuml/Time-Series-Library/resolve/main/electricity/electricity.csv",
+    "exchange_rate": "https://huggingface.co/datasets/thuml/Time-Series-Library/resolve/main/exchange_rate/exchange_rate.csv",
+    "traffic": "https://huggingface.co/datasets/thuml/Time-Series-Library/resolve/main/traffic/traffic.csv",
+    "weather": "https://huggingface.co/datasets/thuml/Time-Series-Library/resolve/main/weather/weather.csv",
+}
 
 
 def print_dataset_manifest() -> None:
@@ -13,3 +26,25 @@ def print_dataset_manifest() -> None:
 
     for spec in list_dataset_specs():
         print(f"{spec.name}\t{spec.domain}\t{spec.storage}")
+
+
+def download_public_benchmark(
+    name: str,
+    project_root: str | Path = ".",
+    overwrite: bool = False,
+) -> Path:
+    """Download one registered public benchmark into its expected raw path."""
+
+    if name not in PUBLIC_BENCHMARK_URLS:
+        raise KeyError(f"No public download URL registered for {name!r}.")
+    spec = get_dataset_spec(name)
+    if spec.path is None:
+        raise ValueError(f"{name} does not define a raw path.")
+
+    output_path = Path(project_root).resolve() / spec.path
+    if output_path.exists() and not overwrite:
+        return output_path
+
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    urlretrieve(PUBLIC_BENCHMARK_URLS[name], output_path)
+    return output_path

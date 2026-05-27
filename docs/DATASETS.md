@@ -43,6 +43,13 @@ To inspect registry entries:
 python scripts/inspect_datasets.py
 ```
 
+To fetch a public benchmark file:
+
+```bash
+python scripts/fetch_public_benchmark.py etth1
+python scripts/materialize_dataset.py etth1
+```
+
 To materialize a small finance sample:
 
 ```bash

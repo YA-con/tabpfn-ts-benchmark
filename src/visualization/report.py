@@ -34,6 +34,11 @@ DOMAIN_LABELS = {
 }
 
 DATASET_LABELS = {
+    "etth1": "ETTh1",
+    "electricity": "Electricity",
+    "exchange_rate": "Exchange Rate",
+    "traffic": "Traffic",
+    "weather": "Weather",
     "synthetic_energy": "合成能源",
     "synthetic_traffic": "合成交通",
     "synthetic_weather": "合成天气",

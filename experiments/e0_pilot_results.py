@@ -65,6 +65,25 @@ def _load_pilot_datasets(project_root: Path) -> list[tuple[str, str, str, int, i
             _synthetic_panel("exchange", "economics", "d", 3, 420),
         ),
     ]
+    for name, domain, freq, horizon, context_length in [
+        ("etth1", "energy", "h", 24, 168),
+        ("electricity", "energy", "h", 24, 168),
+        ("exchange_rate", "economics", "d", 7, 365),
+        ("traffic", "traffic", "h", 24, 168),
+        ("weather", "weather", "10min", 144, 1008),
+    ]:
+        processed_path = project_root / "data" / "processed" / name / "series.parquet"
+        if processed_path.exists():
+            datasets.append(
+                (
+                    name,
+                    domain,
+                    freq,
+                    horizon,
+                    context_length,
+                    load_processed_dataset(name, project_root=project_root),
+                )
+            )
     processed_stock = project_root / "data" / "processed" / "stock_provided" / "series.parquet"
     if not processed_stock.exists():
         materialize_dataset("stock_provided", project_root=project_root)
