@@ -11,6 +11,8 @@ import pandas as pd
 PALETTE = {
     "dummy_mean": "#7c3aed",
     "seasonal_naive": "#0f766e",
+    "moving_average": "#2563eb",
+    "linear_trend": "#dc2626",
     "energy": "#2563eb",
     "traffic": "#f97316",
     "weather": "#0891b2",
@@ -165,12 +167,53 @@ def _heatmap(metrics: pd.DataFrame, metric: str) -> str:
     return "".join(pieces)
 
 
-def _forecast_gallery(predictions: pd.DataFrame, max_panels: int = 4) -> str:
+def _winner_table(metrics: pd.DataFrame) -> str:
+    """Render a compact winner table by dataset."""
+
+    winners = (
+        metrics.sort_values("smape")
+        .groupby("dataset", as_index=False)
+        .first()[["dataset", "domain", "model", "smape", "mae", "rmse"]]
+        .sort_values(["domain", "dataset"])
+    )
+    rows = []
+    for _, row in winners.iterrows():
+        rows.append(
+            "<tr>"
+            f"<td>{escape(_label_dataset(row['dataset']))}</td>"
+            f"<td>{escape(_label_domain(row['domain']))}</td>"
+            f"<td>{escape(_label_model(row['model']))}</td>"
+            f"<td>{float(row['smape']):.3f}</td>"
+            f"<td>{float(row['mae']):.3f}</td>"
+            f"<td>{float(row['rmse']):.3f}</td>"
+            "</tr>"
+        )
+    return (
+        '<table><thead><tr><th>数据集</th><th>领域</th><th>最佳模型</th>'
+        "<th>SMAPE</th><th>MAE</th><th>RMSE</th></tr></thead><tbody>"
+        + "".join(rows)
+        + "</tbody></table>"
+    )
+
+
+def _forecast_gallery(predictions: pd.DataFrame, metrics: pd.DataFrame, max_panels: int = 6) -> str:
     """Render compact actual-vs-predicted SVG panels."""
 
     panels = []
-    keys = predictions[["dataset", "unique_id", "model"]].drop_duplicates().head(max_panels)
-    for _, key in keys.iterrows():
+    best_models = metrics.sort_values("smape").groupby("dataset", as_index=False).first()
+    keys = []
+    for _, best in best_models.iterrows():
+        subset = predictions[
+            (predictions["dataset"] == best["dataset"]) & (predictions["model"] == best["model"])
+        ]
+        if subset.empty:
+            continue
+        first_id = subset["unique_id"].iloc[0]
+        keys.append({"dataset": best["dataset"], "unique_id": first_id, "model": best["model"]})
+    keys_df = pd.DataFrame(keys).head(max_panels)
+    if keys_df.empty:
+        return '<div class="gallery"></div>'
+    for _, key in keys_df.iterrows():
         panel = predictions[
             (predictions["dataset"] == key["dataset"])
             & (predictions["unique_id"] == key["unique_id"])
@@ -287,7 +330,8 @@ th {{ color: #475569; }}
 <section>
   <div class="panel">{_bar_chart(metrics, "smape")}</div>
   <div class="panel">{_heatmap(metrics, "smape")}</div>
-  <div class="panel"><h2>预测曲线样例</h2>{_forecast_gallery(predictions)}</div>
+  <div class="panel"><h2>各数据集最佳模型</h2>{_winner_table(metrics)}</div>
+  <div class="panel"><h2>预测曲线样例</h2>{_forecast_gallery(predictions, metrics)}</div>
   <div class="panel"><h2>指标明细表</h2>{display_metrics.round(5).to_html(index=False)}</div>
 </section>
 </body>
