@@ -167,6 +167,121 @@ def _heatmap(metrics: pd.DataFrame, metric: str) -> str:
     return "".join(pieces)
 
 
+def _rank_bump_chart(metrics: pd.DataFrame) -> str:
+    """Render a model rank bump chart across datasets."""
+
+    pivot = metrics.pivot_table(index="model", columns="dataset", values="smape", aggfunc="mean")
+    datasets = list(pivot.columns)
+    ranks = pivot.rank(axis=0, method="min", ascending=True)
+    models = list(ranks.index)
+    width = 880
+    height = 300
+    left = 110
+    right = 44
+    top = 58
+    bottom = 52
+    plot_w = width - left - right
+    plot_h = height - top - bottom
+    max_rank = max(1, len(models))
+
+    def x_pos(idx: int) -> float:
+        return left + _scale(idx, 0, max(1, len(datasets) - 1), plot_w)
+
+    def y_pos(rank: float) -> float:
+        return top + _scale(rank, 1, max_rank, plot_h)
+
+    pieces = [f'<svg viewBox="0 0 {width} {height}" class="chart">']
+    pieces.append('<text x="20" y="25" class="title">模型排名变化图（按数据集 SMAPE 排名）</text>')
+    for idx, dataset in enumerate(datasets):
+        x = x_pos(idx)
+        pieces.append(f'<line x1="{x:.1f}" y1="{top}" x2="{x:.1f}" y2="{height - bottom}" stroke="#e2e8f0"/>')
+        pieces.append(
+            f'<text x="{x:.1f}" y="{height - 18}" class="axis center">{escape(_label_dataset(dataset))}</text>'
+        )
+    for model in models:
+        coords = []
+        for idx, dataset in enumerate(datasets):
+            coords.append(f"{x_pos(idx):.1f},{y_pos(float(ranks.loc[model, dataset])):.1f}")
+        color = PALETTE.get(str(model), "#334155")
+        pieces.append(f'<polyline points="{" ".join(coords)}" fill="none" stroke="{color}" stroke-width="2.8"/>')
+        first_rank = float(ranks.loc[model, datasets[0]])
+        last_rank = float(ranks.loc[model, datasets[-1]])
+        pieces.append(
+            f'<text x="20" y="{y_pos(first_rank) + 4:.1f}" class="axis">{escape(_label_model(model))}</text>'
+        )
+        pieces.append(
+            f'<text x="{width - 34}" y="{y_pos(last_rank) + 4:.1f}" class="axis">{int(last_rank)}</text>'
+        )
+        for idx, dataset in enumerate(datasets):
+            rank = float(ranks.loc[model, dataset])
+            pieces.append(
+                f'<circle cx="{x_pos(idx):.1f}" cy="{y_pos(rank):.1f}" r="4.2" fill="{color}"/>'
+            )
+    pieces.append("</svg>")
+    return "".join(pieces)
+
+
+def _error_scatter(metrics: pd.DataFrame) -> str:
+    """Render MAE-vs-SMAPE scatter with domain colors and model labels."""
+
+    width = 780
+    height = 420
+    left = 64
+    right = 36
+    top = 48
+    bottom = 58
+    plot_w = width - left - right
+    plot_h = height - top - bottom
+    min_x = float(metrics["mae"].min())
+    max_x = float(metrics["mae"].max())
+    min_y = float(metrics["smape"].min())
+    max_y = float(metrics["smape"].max())
+    pieces = [f'<svg viewBox="0 0 {width} {height}" class="chart">']
+    pieces.append('<text x="20" y="25" class="title">误差空间图（MAE × SMAPE）</text>')
+    pieces.append(f'<line x1="{left}" y1="{height - bottom}" x2="{width - right}" y2="{height - bottom}" stroke="#94a3b8"/>')
+    pieces.append(f'<line x1="{left}" y1="{top}" x2="{left}" y2="{height - bottom}" stroke="#94a3b8"/>')
+    pieces.append(f'<text x="{width / 2}" y="{height - 18}" class="axis center">MAE</text>')
+    pieces.append(f'<text x="18" y="{top - 10}" class="axis">SMAPE</text>')
+    for _, row in metrics.iterrows():
+        x = left + _scale(float(row["mae"]), min_x, max_x, plot_w)
+        y = height - bottom - _scale(float(row["smape"]), min_y, max_y, plot_h)
+        color = PALETTE.get(str(row["domain"]), "#334155")
+        pieces.append(
+            f'<circle cx="{x:.1f}" cy="{y:.1f}" r="7" fill="{color}" opacity="0.76">'
+            f'<title>{escape(_label_dataset(row["dataset"]))} | {escape(_label_model(row["model"]))} '
+            f'SMAPE={float(row["smape"]):.3f}, MAE={float(row["mae"]):.3f}</title></circle>'
+        )
+    legend_x = left + 12
+    legend_y = top + 16
+    for idx, domain in enumerate(sorted(metrics["domain"].unique())):
+        y = legend_y + idx * 20
+        color = PALETTE.get(str(domain), "#334155")
+        pieces.append(f'<circle cx="{legend_x}" cy="{y}" r="5" fill="{color}"/>')
+        pieces.append(f'<text x="{legend_x + 12}" y="{y + 4}" class="axis">{escape(_label_domain(domain))}</text>')
+    pieces.append("</svg>")
+    return "".join(pieces)
+
+
+def _dataset_cards(metrics: pd.DataFrame) -> str:
+    """Render compact dataset cards with best model and model spread."""
+
+    cards = []
+    for dataset, group in metrics.groupby("dataset"):
+        best = group.sort_values("smape").iloc[0]
+        worst = group.sort_values("smape").iloc[-1]
+        spread = float(worst["smape"] - best["smape"])
+        cards.append(
+            '<div class="dataset-card">'
+            f'<div class="dataset-name">{escape(_label_dataset(dataset))}</div>'
+            f'<div class="dataset-domain">{escape(_label_domain(best["domain"]))}</div>'
+            f'<div class="dataset-best">{escape(_label_model(best["model"]))}</div>'
+            f'<div class="dataset-metric">SMAPE {float(best["smape"]):.3f}</div>'
+            f'<div class="dataset-spread">模型差距 {spread:.3f}</div>'
+            "</div>"
+        )
+    return '<div class="cards">' + "".join(cards) + "</div>"
+
+
 def _winner_table(metrics: pd.DataFrame) -> str:
     """Render a compact winner table by dataset."""
 
@@ -311,6 +426,13 @@ section {{ padding: 12px 44px 26px; }}
 .mini {{ background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; width: 100%; }}
 .mini-title {{ font-size: 14px; font-weight: 700; fill: #0f172a; }}
 .mini-sub {{ font-size: 11px; fill: #64748b; }}
+.cards {{ display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 12px; }}
+.dataset-card {{ border: 1px solid #e2e8f0; border-radius: 8px; padding: 14px; background: #f8fafc; }}
+.dataset-name {{ font-weight: 800; font-size: 16px; }}
+.dataset-domain {{ color: #64748b; margin-top: 2px; }}
+.dataset-best {{ margin-top: 12px; font-weight: 700; }}
+.dataset-metric {{ color: #0f766e; margin-top: 4px; font-weight: 700; }}
+.dataset-spread {{ color: #64748b; margin-top: 4px; font-size: 12px; }}
 table {{ border-collapse: collapse; width: 100%; font-size: 13px; }}
 th, td {{ border-bottom: 1px solid #e2e8f0; padding: 9px 8px; text-align: right; }}
 th:first-child, td:first-child {{ text-align: left; }}
@@ -328,8 +450,11 @@ th {{ color: #475569; }}
   <div class="stat">最佳 SMAPE<b>{escape(_label_model(best["model"]))} | {float(best["smape"]):.3f}</b></div>
 </div>
 <section>
+  <div class="panel"><h2>数据集概览</h2>{_dataset_cards(metrics)}</div>
   <div class="panel">{_bar_chart(metrics, "smape")}</div>
+  <div class="panel">{_rank_bump_chart(metrics)}</div>
   <div class="panel">{_heatmap(metrics, "smape")}</div>
+  <div class="panel">{_error_scatter(metrics)}</div>
   <div class="panel"><h2>各数据集最佳模型</h2>{_winner_table(metrics)}</div>
   <div class="panel"><h2>预测曲线样例</h2>{_forecast_gallery(predictions, metrics)}</div>
   <div class="panel"><h2>指标明细表</h2>{display_metrics.round(5).to_html(index=False)}</div>
