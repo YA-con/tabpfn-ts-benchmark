@@ -16,6 +16,8 @@ PALETTE = {
     "linear_trend": "#dc2626",
     "ridge_ar": "#ea580c",
     "hist_gradient_boosting_ar": "#0ea5e9",
+    "lightgbm_ar": "#65a30d",
+    "xgboost_ar": "#be123c",
     "energy": "#2563eb",
     "traffic": "#f97316",
     "weather": "#0891b2",
@@ -30,6 +32,8 @@ MODEL_LABELS = {
     "linear_trend": "Linear Trend",
     "ridge_ar": "Ridge AR",
     "hist_gradient_boosting_ar": "Gradient Boosting AR",
+    "lightgbm_ar": "LightGBM AR",
+    "xgboost_ar": "XGBoost AR",
 }
 
 DOMAIN_LABELS = {

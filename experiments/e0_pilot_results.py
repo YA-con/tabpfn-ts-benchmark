@@ -146,6 +146,36 @@ def _fit_sklearn_autoregressor(
             l2_regularization=0.05,
             random_state=42,
         )
+    elif model_name == "lightgbm_ar":
+        try:
+            from lightgbm import LGBMRegressor
+        except ImportError as exc:
+            raise ImportError("lightgbm_ar requires lightgbm to be installed.") from exc
+        estimator = LGBMRegressor(
+            n_estimators=220,
+            learning_rate=0.04,
+            num_leaves=31,
+            min_child_samples=12,
+            subsample=0.9,
+            colsample_bytree=0.9,
+            random_state=42,
+            verbose=-1,
+        )
+    elif model_name == "xgboost_ar":
+        try:
+            from xgboost import XGBRegressor
+        except ImportError as exc:
+            raise ImportError("xgboost_ar requires xgboost to be installed.") from exc
+        estimator = XGBRegressor(
+            n_estimators=180,
+            learning_rate=0.04,
+            max_depth=4,
+            subsample=0.9,
+            colsample_bytree=0.9,
+            objective="reg:squarederror",
+            random_state=42,
+            n_jobs=2,
+        )
     else:
         raise ValueError(f"Unknown sklearn model: {model_name}")
     estimator.fit(np.asarray(features), np.asarray(targets))
@@ -216,12 +246,14 @@ def _evaluate_dataset(
         "linear_trend",
         "ridge_ar",
         "hist_gradient_boosting_ar",
+        "lightgbm_ar",
+        "xgboost_ar",
     ]
     for model_name in model_names:
         start_fit = time.perf_counter()
         train_stats = train.groupby("unique_id")["y"].mean()
         sklearn_state = None
-        if model_name in {"ridge_ar", "hist_gradient_boosting_ar"}:
+        if model_name in {"ridge_ar", "hist_gradient_boosting_ar", "lightgbm_ar", "xgboost_ar"}:
             sklearn_state = _fit_sklearn_autoregressor(train, model_name, season_length)
         train_time = time.perf_counter() - start_fit
         start_predict = time.perf_counter()

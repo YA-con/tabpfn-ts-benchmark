@@ -4,7 +4,7 @@ pandas==2.2.3
 scikit-learn==1.5.2
 hydra-core==1.3.2
 wandb==0.18.7
-tabpfn-time-series @ git+https://github.com/PriorLabs/tabpfn-time-series.git
+tabpfn-time-series==1.1.0
 statsforecast==1.7.8
 neuralforecast==1.7.5
 mlforecast==0.13.4
