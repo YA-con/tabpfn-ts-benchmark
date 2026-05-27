@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import math
 from html import escape
 from pathlib import Path
 
@@ -87,6 +88,32 @@ def _scale(value: float, min_value: float, max_value: float, width: int) -> floa
     if max_value == min_value:
         return width / 2
     return (value - min_value) / (max_value - min_value) * width
+
+
+def _model_order(metrics: pd.DataFrame) -> list[str]:
+    """Order models by average SMAPE."""
+
+    return [
+        str(model)
+        for model in metrics.groupby("model")["smape"].mean().sort_values(ascending=True).index
+    ]
+
+
+def _model_legend(models: list[str], x: float, y: float, columns: int = 3) -> str:
+    """Render a compact model color legend."""
+
+    pieces = []
+    col_w = 190
+    row_h = 20
+    for idx, model in enumerate(models):
+        col = idx % columns
+        row = idx // columns
+        lx = x + col * col_w
+        ly = y + row * row_h
+        color = PALETTE.get(model, "#334155")
+        pieces.append(f'<circle cx="{lx}" cy="{ly}" r="5" fill="{color}"/>')
+        pieces.append(f'<text x="{lx + 12}" y="{ly + 4}" class="axis">{escape(_label_model(model))}</text>')
+    return "".join(pieces)
 
 
 def _bar_chart(metrics: pd.DataFrame, metric: str) -> str:
@@ -397,6 +424,368 @@ def _forecast_gallery(predictions: pd.DataFrame, metrics: pd.DataFrame, max_pane
     return '<div class="gallery">' + "".join(panels) + "</div>"
 
 
+def _actual_predicted_fit(predictions: pd.DataFrame, metrics: pd.DataFrame) -> str:
+    """Render actual-vs-predicted scatter with one fitted line per model."""
+
+    frame = predictions[["model", "y", "y_hat"]].dropna().copy()
+    if frame.empty:
+        return ""
+    if len(frame) > 900:
+        frame = frame.sample(n=900, random_state=42)
+    width = 820
+    height = 480
+    left = 70
+    right = 32
+    top = 58
+    bottom = 104
+    plot_w = width - left - right
+    plot_h = height - top - bottom
+    min_v = float(pd.concat([frame["y"], frame["y_hat"]]).min())
+    max_v = float(pd.concat([frame["y"], frame["y_hat"]]).max())
+    models = _model_order(metrics)
+    pieces = [f'<svg viewBox="0 0 {width} {height}" class="chart">']
+    pieces.append('<text x="20" y="25" class="title">真实值-预测值散点图（含拟合线）</text>')
+    pieces.append('<text x="20" y="45" class="axis">灰色虚线为理想预测线；彩色线为模型拟合线</text>')
+    pieces.append(f'<line x1="{left}" y1="{height - bottom}" x2="{width - right}" y2="{height - bottom}" stroke="#94a3b8"/>')
+    pieces.append(f'<line x1="{left}" y1="{top}" x2="{left}" y2="{height - bottom}" stroke="#94a3b8"/>')
+    pieces.append(f'<text x="{width / 2}" y="{height - 64}" class="axis center">真实值</text>')
+    pieces.append(f'<text x="18" y="{top - 10}" class="axis">预测值</text>')
+    pieces.append(
+        f'<line x1="{left}" y1="{height - bottom}" x2="{width - right}" y2="{top}" '
+        f'stroke="#64748b" stroke-dasharray="5 5"/>'
+    )
+    for model in models:
+        subset = frame[frame["model"] == model]
+        if subset.empty:
+            continue
+        color = PALETTE.get(model, "#334155")
+        for _, row in subset.iterrows():
+            x = left + _scale(float(row["y"]), min_v, max_v, plot_w)
+            y = height - bottom - _scale(float(row["y_hat"]), min_v, max_v, plot_h)
+            pieces.append(f'<circle cx="{x:.1f}" cy="{y:.1f}" r="2.4" fill="{color}" opacity="0.26"/>')
+        if subset["y"].nunique() > 1:
+            slope = float(subset["y"].cov(subset["y_hat"]) / subset["y"].var())
+            intercept = float(subset["y_hat"].mean() - slope * subset["y"].mean())
+            y1 = intercept + slope * min_v
+            y2 = intercept + slope * max_v
+            x1p = left
+            x2p = width - right
+            y1p = height - bottom - _scale(y1, min_v, max_v, plot_h)
+            y2p = height - bottom - _scale(y2, min_v, max_v, plot_h)
+            pieces.append(
+                f'<line x1="{x1p}" y1="{y1p:.1f}" x2="{x2p}" y2="{y2p:.1f}" '
+                f'stroke="{color}" stroke-width="2.2"/>'
+            )
+    pieces.append(_model_legend(models, left, height - 38, columns=3))
+    pieces.append("</svg>")
+    return "".join(pieces)
+
+
+def _residual_scatter(predictions: pd.DataFrame, metrics: pd.DataFrame) -> str:
+    """Render residuals against predicted values."""
+
+    frame = predictions[["model", "y", "y_hat"]].dropna().copy()
+    if frame.empty:
+        return ""
+    frame["residual"] = frame["y"] - frame["y_hat"]
+    if len(frame) > 900:
+        frame = frame.sample(n=900, random_state=7)
+    width = 820
+    height = 430
+    left = 70
+    right = 32
+    top = 54
+    bottom = 92
+    plot_w = width - left - right
+    plot_h = height - top - bottom
+    min_x = float(frame["y_hat"].min())
+    max_x = float(frame["y_hat"].max())
+    max_abs = float(frame["residual"].abs().max())
+    models = _model_order(metrics)
+    zero_y = top + plot_h / 2
+    pieces = [f'<svg viewBox="0 0 {width} {height}" class="chart">']
+    pieces.append('<text x="20" y="25" class="title">残差图（真实值 - 预测值）</text>')
+    pieces.append('<text x="20" y="45" class="axis">点越接近零线，预测偏差越小</text>')
+    pieces.append(f'<line x1="{left}" y1="{height - bottom}" x2="{width - right}" y2="{height - bottom}" stroke="#94a3b8"/>')
+    pieces.append(f'<line x1="{left}" y1="{top}" x2="{left}" y2="{height - bottom}" stroke="#94a3b8"/>')
+    pieces.append(f'<line x1="{left}" y1="{zero_y:.1f}" x2="{width - right}" y2="{zero_y:.1f}" stroke="#0f172a" stroke-dasharray="5 5"/>')
+    pieces.append(f'<text x="{width / 2}" y="{height - 52}" class="axis center">预测值</text>')
+    pieces.append(f'<text x="18" y="{top - 8}" class="axis">残差</text>')
+    for _, row in frame.iterrows():
+        color = PALETTE.get(str(row["model"]), "#334155")
+        x = left + _scale(float(row["y_hat"]), min_x, max_x, plot_w)
+        y = zero_y - _scale(float(row["residual"]), -max_abs, max_abs, plot_h) + plot_h / 2
+        pieces.append(f'<circle cx="{x:.1f}" cy="{y:.1f}" r="2.6" fill="{color}" opacity="0.34"/>')
+    pieces.append(_model_legend(models, left, height - 28, columns=3))
+    pieces.append("</svg>")
+    return "".join(pieces)
+
+
+def _residual_boxplot(predictions: pd.DataFrame, metrics: pd.DataFrame) -> str:
+    """Render model-wise absolute residual boxplots."""
+
+    frame = predictions[["model", "y", "y_hat"]].dropna().copy()
+    if frame.empty:
+        return ""
+    frame["abs_error"] = (frame["y"] - frame["y_hat"]).abs()
+    models = _model_order(metrics)
+    stats = []
+    for model in models:
+        values = frame.loc[frame["model"] == model, "abs_error"]
+        if values.empty:
+            continue
+        stats.append(
+            {
+                "model": model,
+                "q05": float(values.quantile(0.05)),
+                "q25": float(values.quantile(0.25)),
+                "q50": float(values.quantile(0.50)),
+                "q75": float(values.quantile(0.75)),
+                "q95": float(values.quantile(0.95)),
+            }
+        )
+    if not stats:
+        return ""
+    width = 840
+    row_h = 48
+    left = 190
+    right = 44
+    top = 54
+    bottom = 38
+    plot_w = width - left - right
+    height = top + row_h * len(stats) + bottom
+    max_v = max(item["q95"] for item in stats)
+    pieces = [f'<svg viewBox="0 0 {width} {height}" class="chart">']
+    pieces.append('<text x="20" y="25" class="title">绝对残差箱线图</text>')
+    pieces.append('<text x="20" y="45" class="axis">箱体为 25%-75%，横线为 5%-95%</text>')
+    for idx, item in enumerate(stats):
+        y = top + idx * row_h + 18
+        color = PALETTE.get(item["model"], "#334155")
+        q05 = left + _scale(item["q05"], 0, max_v, plot_w)
+        q25 = left + _scale(item["q25"], 0, max_v, plot_w)
+        q50 = left + _scale(item["q50"], 0, max_v, plot_w)
+        q75 = left + _scale(item["q75"], 0, max_v, plot_w)
+        q95 = left + _scale(item["q95"], 0, max_v, plot_w)
+        pieces.append(f'<text x="20" y="{y + 5}" class="axis">{escape(_label_model(item["model"]))}</text>')
+        pieces.append(f'<line x1="{q05:.1f}" y1="{y}" x2="{q95:.1f}" y2="{y}" stroke="{color}" stroke-width="2"/>')
+        pieces.append(f'<line x1="{q05:.1f}" y1="{y - 8}" x2="{q05:.1f}" y2="{y + 8}" stroke="{color}" stroke-width="2"/>')
+        pieces.append(f'<line x1="{q95:.1f}" y1="{y - 8}" x2="{q95:.1f}" y2="{y + 8}" stroke="{color}" stroke-width="2"/>')
+        pieces.append(f'<rect x="{q25:.1f}" y="{y - 13}" width="{max(q75 - q25, 1):.1f}" height="26" rx="4" fill="{color}" opacity="0.25" stroke="{color}"/>')
+        pieces.append(f'<line x1="{q50:.1f}" y1="{y - 15}" x2="{q50:.1f}" y2="{y + 15}" stroke="{color}" stroke-width="3"/>')
+        pieces.append(f'<text x="{q50 + 8:.1f}" y="{y + 5}" class="value">{item["q50"]:.3f}</text>')
+    pieces.append("</svg>")
+    return "".join(pieces)
+
+
+def _taylor_diagram(predictions: pd.DataFrame, metrics: pd.DataFrame) -> str:
+    """Render a compact Taylor-style diagram by model."""
+
+    frame = predictions[["model", "y", "y_hat"]].dropna().copy()
+    if frame.empty:
+        return ""
+    models = _model_order(metrics)
+    rows = []
+    for model in models:
+        subset = frame[frame["model"] == model]
+        if len(subset) < 3:
+            continue
+        true_std = float(subset["y"].std())
+        pred_std = float(subset["y_hat"].std())
+        if true_std == 0.0 or math.isnan(true_std) or math.isnan(pred_std):
+            continue
+        corr = float(subset["y"].corr(subset["y_hat"]))
+        if math.isnan(corr):
+            corr = 0.0
+        rows.append({"model": model, "corr": max(-1.0, min(1.0, corr)), "ratio": pred_std / true_std})
+    if not rows:
+        return ""
+    width = 520
+    height = 420
+    cx = 96
+    cy = 334
+    radius = 260
+    max_ratio = max(1.6, max(row["ratio"] for row in rows) * 1.12)
+    pieces = [f'<svg viewBox="0 0 {width} {height}" class="chart">']
+    pieces.append('<text x="20" y="25" class="title">泰勒图（相关性 × 标准差比）</text>')
+    pieces.append('<text x="20" y="45" class="axis">越靠近右侧且半径接近 1，预测形态越接近真实值</text>')
+    for ratio in [0.5, 1.0, 1.5]:
+        r = radius * ratio / max_ratio
+        pieces.append(f'<path d="M {cx:.1f} {cy - r:.1f} A {r:.1f} {r:.1f} 0 0 1 {cx + r:.1f} {cy:.1f}" fill="none" stroke="#e2e8f0"/>')
+        pieces.append(f'<text x="{cx + r - 8:.1f}" y="{cy + 18}" class="axis">{ratio:.1f}</text>')
+    for corr in [0.0, 0.5, 0.8, 0.95, 1.0]:
+        angle = math.acos(corr)
+        x = cx + radius * math.cos(angle)
+        y = cy - radius * math.sin(angle)
+        pieces.append(f'<line x1="{cx}" y1="{cy}" x2="{x:.1f}" y2="{y:.1f}" stroke="#e2e8f0"/>')
+        pieces.append(f'<text x="{x + 4:.1f}" y="{y:.1f}" class="axis">r={corr:.2f}</text>')
+    pieces.append(f'<line x1="{cx}" y1="{cy}" x2="{cx + radius}" y2="{cy}" stroke="#94a3b8"/>')
+    pieces.append(f'<line x1="{cx}" y1="{cy}" x2="{cx}" y2="{cy - radius}" stroke="#94a3b8"/>')
+    for row in rows:
+        angle = math.acos(max(0.0, min(1.0, row["corr"])))
+        r = radius * min(row["ratio"], max_ratio) / max_ratio
+        x = cx + r * math.cos(angle)
+        y = cy - r * math.sin(angle)
+        color = PALETTE.get(row["model"], "#334155")
+        pieces.append(
+            f'<circle cx="{x:.1f}" cy="{y:.1f}" r="7" fill="{color}">'
+            f'<title>{escape(_label_model(row["model"]))} corr={row["corr"]:.3f}, std ratio={row["ratio"]:.3f}</title></circle>'
+        )
+    pieces.append(_model_legend(models, 300, 88, columns=1))
+    pieces.append("</svg>")
+    return "".join(pieces)
+
+
+def _radar_chart(metrics: pd.DataFrame) -> str:
+    """Render normalized metric radar chart for model profiles."""
+
+    metric_cols = ["smape", "mae", "rmse", "wape", "mase"]
+    available = [col for col in metric_cols if col in metrics.columns]
+    if len(available) < 3:
+        return ""
+    grouped = metrics.groupby("model")[available].mean()
+    models = _model_order(metrics)
+    width = 560
+    height = 430
+    cx = 210
+    cy = 220
+    radius = 142
+    pieces = [f'<svg viewBox="0 0 {width} {height}" class="chart">']
+    pieces.append('<text x="20" y="25" class="title">模型综合雷达图</text>')
+    pieces.append('<text x="20" y="45" class="axis">所有指标已转成相对得分，越外圈越好</text>')
+    for level in [0.25, 0.5, 0.75, 1.0]:
+        coords = []
+        for idx in range(len(available)):
+            angle = -math.pi / 2 + 2 * math.pi * idx / len(available)
+            coords.append(f"{cx + radius * level * math.cos(angle):.1f},{cy + radius * level * math.sin(angle):.1f}")
+        pieces.append(f'<polygon points="{" ".join(coords)}" fill="none" stroke="#e2e8f0"/>')
+    for idx, metric in enumerate(available):
+        angle = -math.pi / 2 + 2 * math.pi * idx / len(available)
+        x = cx + radius * 1.13 * math.cos(angle)
+        y = cy + radius * 1.13 * math.sin(angle)
+        pieces.append(f'<line x1="{cx}" y1="{cy}" x2="{cx + radius * math.cos(angle):.1f}" y2="{cy + radius * math.sin(angle):.1f}" stroke="#e2e8f0"/>')
+        pieces.append(f'<text x="{x:.1f}" y="{y:.1f}" class="axis center">{escape(METRIC_LABELS.get(metric, metric.upper()))}</text>')
+    for model in models:
+        if model not in grouped.index:
+            continue
+        coords = []
+        for idx, metric in enumerate(available):
+            col = grouped[metric]
+            min_v = float(col.min())
+            max_v = float(col.max())
+            score = 1.0 - _scale(float(grouped.loc[model, metric]), min_v, max_v, 1.0)
+            angle = -math.pi / 2 + 2 * math.pi * idx / len(available)
+            coords.append(f"{cx + radius * score * math.cos(angle):.1f},{cy + radius * score * math.sin(angle):.1f}")
+        color = PALETTE.get(model, "#334155")
+        pieces.append(f'<polygon points="{" ".join(coords)}" fill="{color}" opacity="0.10" stroke="{color}" stroke-width="2"/>')
+    pieces.append(_model_legend(models, 382, 92, columns=1))
+    pieces.append("</svg>")
+    return "".join(pieces)
+
+
+def _three_d_error_bars(metrics: pd.DataFrame) -> str:
+    """Render pseudo-3D bars for average SMAPE."""
+
+    grouped = (
+        metrics.groupby("model", as_index=False)["smape"]
+        .mean()
+        .sort_values("smape", ascending=False)
+        .reset_index(drop=True)
+    )
+    width = 880
+    height = 420
+    left = 62
+    base = 342
+    bar_w = 72
+    gap = 48
+    depth = 18
+    max_v = float(grouped["smape"].max())
+    pieces = [f'<svg viewBox="0 0 {width} {height}" class="chart">']
+    pieces.append('<text x="20" y="25" class="title">3D 风格平均误差柱图</text>')
+    pieces.append('<text x="20" y="45" class="axis">柱越低表示平均 SMAPE 越小</text>')
+    pieces.append(f'<line x1="{left - 20}" y1="{base}" x2="{width - 30}" y2="{base}" stroke="#94a3b8"/>')
+    for idx, row in grouped.iterrows():
+        x = left + idx * (bar_w + gap)
+        h = _scale(float(row["smape"]), 0, max_v, 240)
+        y = base - h
+        color = PALETTE.get(str(row["model"]), "#334155")
+        pieces.append(f'<rect x="{x}" y="{y:.1f}" width="{bar_w}" height="{h:.1f}" fill="{color}" opacity="0.86"/>')
+        pieces.append(
+            f'<polygon points="{x},{y:.1f} {x + depth},{y - depth:.1f} {x + bar_w + depth},{y - depth:.1f} '
+            f'{x + bar_w},{y:.1f}" fill="{color}" opacity="0.62"/>'
+        )
+        pieces.append(
+            f'<polygon points="{x + bar_w},{y:.1f} {x + bar_w + depth},{y - depth:.1f} '
+            f'{x + bar_w + depth},{base - depth} {x + bar_w},{base}" fill="{color}" opacity="0.38"/>'
+        )
+        pieces.append(f'<text x="{x + bar_w / 2}" y="{y - 24:.1f}" class="value center">{float(row["smape"]):.2f}</text>')
+        pieces.append(
+            f'<text x="{x + bar_w / 2}" y="{base + 22}" class="axis center">'
+            f'{escape(_label_model(row["model"]))}</text>'
+        )
+    pieces.append("</svg>")
+    return "".join(pieces)
+
+
+def _radial_error_bars(metrics: pd.DataFrame) -> str:
+    """Render radial grouped bars with standard-error whiskers."""
+
+    grouped = metrics.groupby(["domain", "model"])["smape"].agg(["mean", "std", "count"]).reset_index()
+    if grouped.empty:
+        return ""
+    domains = sorted(metrics["domain"].unique())
+    models = _model_order(metrics)
+    width = 720
+    height = 720
+    cx = width / 2
+    cy = 360
+    inner = 92
+    outer = 276
+    max_v = float((grouped["mean"] + grouped["std"].fillna(0.0)).max())
+    pieces = [f'<svg viewBox="0 0 {width} {height}" class="chart">']
+    pieces.append('<text x="24" y="28" class="title">环形分组柱状图（带误差棒）</text>')
+    pieces.append('<text x="24" y="48" class="axis">半径表示平均 SMAPE，误差棒为跨数据集标准差</text>')
+    total_slots = len(domains) * len(models)
+    slot_angle = 2 * math.pi / max(1, total_slots)
+    for ring in [0.25, 0.5, 0.75, 1.0]:
+        r = inner + (outer - inner) * ring
+        pieces.append(f'<circle cx="{cx}" cy="{cy}" r="{r:.1f}" fill="none" stroke="#e2e8f0"/>')
+    for d_idx, domain in enumerate(domains):
+        mid_slot = d_idx * len(models) + len(models) / 2
+        angle = -math.pi / 2 + mid_slot * slot_angle
+        lx = cx + (outer + 34) * math.cos(angle)
+        ly = cy + (outer + 34) * math.sin(angle)
+        pieces.append(f'<text x="{lx:.1f}" y="{ly:.1f}" class="axis center">{escape(_label_domain(domain))}</text>')
+    for d_idx, domain in enumerate(domains):
+        for m_idx, model in enumerate(models):
+            row = grouped[(grouped["domain"] == domain) & (grouped["model"] == model)]
+            if row.empty:
+                continue
+            mean_v = float(row["mean"].iloc[0])
+            std_v = float(row["std"].fillna(0.0).iloc[0])
+            angle = -math.pi / 2 + (d_idx * len(models) + m_idx + 0.5) * slot_angle
+            r = inner + _scale(mean_v, 0, max_v, outer - inner)
+            err_r = inner + _scale(mean_v + std_v, 0, max_v, outer - inner)
+            x1 = cx + inner * math.cos(angle)
+            y1 = cy + inner * math.sin(angle)
+            x2 = cx + r * math.cos(angle)
+            y2 = cy + r * math.sin(angle)
+            xe = cx + err_r * math.cos(angle)
+            ye = cy + err_r * math.sin(angle)
+            color = PALETTE.get(model, "#334155")
+            pieces.append(f'<line x1="{x1:.1f}" y1="{y1:.1f}" x2="{x2:.1f}" y2="{y2:.1f}" stroke="{color}" stroke-width="7" opacity="0.78"/>')
+            pieces.append(f'<line x1="{x2:.1f}" y1="{y2:.1f}" x2="{xe:.1f}" y2="{ye:.1f}" stroke="{color}" stroke-width="1.5"/>')
+            cap_angle = angle + math.pi / 2
+            cap = 5
+            pieces.append(
+                f'<line x1="{xe - cap * math.cos(cap_angle):.1f}" y1="{ye - cap * math.sin(cap_angle):.1f}" '
+                f'x2="{xe + cap * math.cos(cap_angle):.1f}" y2="{ye + cap * math.sin(cap_angle):.1f}" '
+                f'stroke="{color}" stroke-width="1.5"/>'
+            )
+    pieces.append(_model_legend(models, 110, 652, columns=3))
+    pieces.append("</svg>")
+    return "".join(pieces)
+
+
 def build_pilot_report(
     metrics: pd.DataFrame,
     predictions: pd.DataFrame,
@@ -455,6 +844,8 @@ section {{ padding: 12px 44px 26px; }}
 .value {{ font-size: 13px; fill: #334155; }}
 .cell {{ text-anchor: middle; font-size: 14px; font-weight: 700; fill: #0f172a; }}
 .gallery {{ display: grid; grid-template-columns: repeat(2, minmax(260px, 1fr)); gap: 14px; }}
+.advanced-grid {{ display: grid; grid-template-columns: repeat(2, minmax(320px, 1fr)); gap: 18px; }}
+.advanced-grid .panel {{ margin-bottom: 0; }}
 .mini {{ background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; width: 100%; }}
 .mini-title {{ font-size: 14px; font-weight: 700; fill: #0f172a; }}
 .mini-sub {{ font-size: 11px; fill: #64748b; }}
@@ -489,6 +880,16 @@ th {{ color: #475569; }}
   <div class="panel">{_error_scatter(metrics)}</div>
   <div class="panel"><h2>各数据集最佳模型</h2>{_winner_table(metrics)}</div>
   <div class="panel"><h2>预测曲线样例</h2>{_forecast_gallery(predictions, metrics)}</div>
+  <h2>高级诊断图</h2>
+  <div class="advanced-grid">
+    <div class="panel">{_actual_predicted_fit(predictions, metrics)}</div>
+    <div class="panel">{_residual_scatter(predictions, metrics)}</div>
+    <div class="panel">{_residual_boxplot(predictions, metrics)}</div>
+    <div class="panel">{_taylor_diagram(predictions, metrics)}</div>
+    <div class="panel">{_radar_chart(metrics)}</div>
+    <div class="panel">{_three_d_error_bars(metrics)}</div>
+    <div class="panel">{_radial_error_bars(metrics)}</div>
+  </div>
   <div class="panel"><h2>指标明细表</h2>{display_metrics.round(5).to_html(index=False)}</div>
 </section>
 </body>
