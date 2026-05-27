@@ -13,6 +13,8 @@ PALETTE = {
     "seasonal_naive": "#0f766e",
     "moving_average": "#2563eb",
     "linear_trend": "#dc2626",
+    "ridge_ar": "#ea580c",
+    "hist_gradient_boosting_ar": "#0ea5e9",
     "energy": "#2563eb",
     "traffic": "#f97316",
     "weather": "#0891b2",
@@ -25,6 +27,8 @@ MODEL_LABELS = {
     "seasonal_naive": "Seasonal Naive",
     "moving_average": "Moving Average",
     "linear_trend": "Linear Trend",
+    "ridge_ar": "Ridge AR",
+    "hist_gradient_boosting_ar": "Gradient Boosting AR",
 }
 
 DOMAIN_LABELS = {

@@ -7,6 +7,10 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
+from sklearn.ensemble import HistGradientBoostingRegressor
+from sklearn.linear_model import Ridge
+from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import StandardScaler
 
 from src.data.materialize import load_processed_dataset, materialize_dataset
 from src.evaluation.point_metrics import mae, mase, mse, rmse, smape, wape
@@ -92,6 +96,93 @@ def _load_pilot_datasets(project_root: Path) -> list[tuple[str, str, str, int, i
     return datasets
 
 
+def _lag_features(history: list[float], lags: list[int]) -> list[float]:
+    """Build autoregressive features from normalized history."""
+
+    values = [history[-lag] for lag in lags]
+    values.append(float(np.mean(history[-min(3, len(history)) :])))
+    values.append(float(np.mean(history[-min(max(lags), len(history)) :])))
+    values.append(float(np.std(history[-min(max(lags), len(history)) :])))
+    return values
+
+
+def _fit_sklearn_autoregressor(
+    train: pd.DataFrame,
+    model_name: str,
+    season_length: int,
+    max_windows_per_series: int = 360,
+) -> tuple[object, dict[str, tuple[float, float]], list[int]]:
+    """Fit a lightweight global autoregressive sklearn model."""
+
+    lags = sorted({1, 2, 3, max(1, season_length), max(2, season_length * 2)})
+    max_lag = max(lags)
+    features: list[list[float]] = []
+    targets: list[float] = []
+    scales: dict[str, tuple[float, float]] = {}
+    for unique_id, group in train.groupby("unique_id"):
+        values = group.sort_values("ds")["y"].to_numpy(dtype=float)
+        if len(values) <= max_lag:
+            continue
+        center = float(np.mean(values))
+        scale = float(np.std(values))
+        if scale == 0.0:
+            scale = 1.0
+        scales[str(unique_id)] = (center, scale)
+        normalized = ((values - center) / scale).tolist()
+        candidate_idxs = list(range(max_lag, len(normalized)))
+        for idx in candidate_idxs[-max_windows_per_series:]:
+            history = normalized[:idx]
+            features.append(_lag_features(history, lags))
+            targets.append(float(normalized[idx]))
+    if not features:
+        raise ValueError(f"Not enough training windows for {model_name}.")
+    if model_name == "ridge_ar":
+        estimator = make_pipeline(StandardScaler(), Ridge(alpha=1.0))
+    elif model_name == "hist_gradient_boosting_ar":
+        estimator = HistGradientBoostingRegressor(
+            max_iter=120,
+            learning_rate=0.06,
+            max_leaf_nodes=31,
+            l2_regularization=0.05,
+            random_state=42,
+        )
+    else:
+        raise ValueError(f"Unknown sklearn model: {model_name}")
+    estimator.fit(np.asarray(features), np.asarray(targets))
+    return estimator, scales, lags
+
+
+def _predict_sklearn_autoregressor(
+    model: object,
+    scales: dict[str, tuple[float, float]],
+    lags: list[int],
+    train: pd.DataFrame,
+    test: pd.DataFrame,
+) -> pd.DataFrame:
+    """Recursively forecast each series with a fitted sklearn autoregressor."""
+
+    prediction_parts: list[pd.DataFrame] = []
+    for unique_id, test_group in test.groupby("unique_id"):
+        history_values = train[train["unique_id"] == unique_id].sort_values("ds")["y"].to_numpy(dtype=float)
+        if str(unique_id) not in scales or len(history_values) < max(lags):
+            pred_group = test_group[["unique_id", "ds", "y"]].copy()
+            pred_group["y_hat"] = float(np.mean(history_values))
+            prediction_parts.append(pred_group)
+            continue
+        center, scale = scales[str(unique_id)]
+        history = ((history_values - center) / scale).tolist()
+        y_hat: list[float] = []
+        for _ in range(len(test_group)):
+            x = np.asarray([_lag_features(history, lags)])
+            pred_norm = float(model.predict(x)[0])
+            history.append(pred_norm)
+            y_hat.append(pred_norm * scale + center)
+        pred_group = test_group[["unique_id", "ds", "y"]].copy()
+        pred_group["y_hat"] = y_hat
+        prediction_parts.append(pred_group)
+    return pd.concat(prediction_parts, ignore_index=True)
+
+
 def _evaluate_dataset(
     dataset: str,
     domain: str,
@@ -118,36 +209,50 @@ def _evaluate_dataset(
     metrics: list[dict[str, object]] = []
     predictions: list[pd.DataFrame] = []
     season_length = max(1, min(horizon, 24))
-    model_names = ["dummy_mean", "seasonal_naive", "moving_average", "linear_trend"]
+    model_names = [
+        "dummy_mean",
+        "seasonal_naive",
+        "moving_average",
+        "linear_trend",
+        "ridge_ar",
+        "hist_gradient_boosting_ar",
+    ]
     for model_name in model_names:
         start_fit = time.perf_counter()
         train_stats = train.groupby("unique_id")["y"].mean()
+        sklearn_state = None
+        if model_name in {"ridge_ar", "hist_gradient_boosting_ar"}:
+            sklearn_state = _fit_sklearn_autoregressor(train, model_name, season_length)
         train_time = time.perf_counter() - start_fit
         start_predict = time.perf_counter()
         prediction_parts: list[pd.DataFrame] = []
-        for unique_id, test_group in test.groupby("unique_id"):
-            history = train[train["unique_id"] == unique_id].sort_values("ds")
-            pred_group = test_group[["unique_id", "ds", "y"]].copy()
-            if model_name == "dummy_mean":
-                pred_group["y_hat"] = float(train_stats.loc[unique_id])
-            elif model_name == "seasonal_naive":
-                seasonal_values = history["y"].tail(season_length).to_numpy()
-                repeats = int(np.ceil(len(pred_group) / len(seasonal_values)))
-                pred_group["y_hat"] = np.tile(seasonal_values, repeats)[: len(pred_group)]
-            elif model_name == "moving_average":
-                window = min(context_length, max(horizon, 24), len(history))
-                pred_group["y_hat"] = float(history["y"].tail(window).mean())
-            elif model_name == "linear_trend":
-                window = min(context_length, len(history))
-                values = history["y"].tail(window).to_numpy(dtype=float)
-                x = np.arange(len(values), dtype=float)
-                slope, intercept = np.polyfit(x, values, deg=1)
-                future_x = np.arange(len(values), len(values) + len(pred_group), dtype=float)
-                pred_group["y_hat"] = intercept + slope * future_x
-            else:
-                raise ValueError(f"Unknown pilot model: {model_name}")
-            prediction_parts.append(pred_group)
-        joined = pd.concat(prediction_parts, ignore_index=True)
+        if sklearn_state is not None:
+            estimator, scales, lags = sklearn_state
+            joined = _predict_sklearn_autoregressor(estimator, scales, lags, train, test)
+        else:
+            for unique_id, test_group in test.groupby("unique_id"):
+                history = train[train["unique_id"] == unique_id].sort_values("ds")
+                pred_group = test_group[["unique_id", "ds", "y"]].copy()
+                if model_name == "dummy_mean":
+                    pred_group["y_hat"] = float(train_stats.loc[unique_id])
+                elif model_name == "seasonal_naive":
+                    seasonal_values = history["y"].tail(season_length).to_numpy()
+                    repeats = int(np.ceil(len(pred_group) / len(seasonal_values)))
+                    pred_group["y_hat"] = np.tile(seasonal_values, repeats)[: len(pred_group)]
+                elif model_name == "moving_average":
+                    window = min(context_length, max(horizon, 24), len(history))
+                    pred_group["y_hat"] = float(history["y"].tail(window).mean())
+                elif model_name == "linear_trend":
+                    window = min(context_length, len(history))
+                    values = history["y"].tail(window).to_numpy(dtype=float)
+                    x = np.arange(len(values), dtype=float)
+                    slope, intercept = np.polyfit(x, values, deg=1)
+                    future_x = np.arange(len(values), len(values) + len(pred_group), dtype=float)
+                    pred_group["y_hat"] = intercept + slope * future_x
+                else:
+                    raise ValueError(f"Unknown pilot model: {model_name}")
+                prediction_parts.append(pred_group)
+            joined = pd.concat(prediction_parts, ignore_index=True)
         inference_time_s = time.perf_counter() - start_predict
         if len(joined) != len(test):
             raise ValueError(f"{model_name} produced {len(joined)} aligned rows for {len(test)} targets.")
