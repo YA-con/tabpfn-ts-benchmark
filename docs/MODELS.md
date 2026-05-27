@@ -44,18 +44,29 @@ models, so the comparison shares the same chronological split and metrics.
 
 `tabpfn-time-series==1.1.0` installs on A00 and imports successfully.
 
-Local TabPFN-TS inference is currently blocked by the gated Hugging Face model
-`Prior-Labs/tabpfn_3`. The smoke test reaches model loading, then requires:
+The time-series checkpoint should be:
 
 ```text
-HF_TOKEN with access to Prior-Labs/tabpfn_3
+tabpfn-v3-regressor-v3_20260506_timeseries.ckpt
 ```
 
-or a prior command-line login:
+On A00 it is stored outside the git checkout:
+
+```text
+/home/wanyi/zy_test/tabpfn_weights/tabpfn-v3-regressor-v3_20260506_timeseries.ckpt
+```
+
+Do not commit checkpoint files to git.
+
+Run the offline smoke test:
 
 ```bash
-hf auth login
+cd /home/wanyi/zy_test/tabpfn-ts-benchmark
+export PATH=/home/wanyi/zy_test/venv/bin:$PATH
+export TABPFN_DISABLE_TELEMETRY=1
+export CUDA_VISIBLE_DEVICES=""
+python scripts/run_tabpfn_ts_smoke.py --device cpu
 ```
 
-A00 also showed temporary DNS failures when checking the gated model license, so
-the next TabPFN-TS run should first verify both network access and authentication.
+This has been verified with CPU torch on A00. For GPU inference, the environment
+needs a CUDA-enabled torch build; the current A00 venv reports `torch==2.5.1+cpu`.
