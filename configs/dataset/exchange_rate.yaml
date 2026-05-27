@@ -1,0 +1,5 @@
+name: exchange_rate
+_target_: src.data.loaders.load_nixtla_csv
+freq: D
+horizon: 7
+context_length: 365

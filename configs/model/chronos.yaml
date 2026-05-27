@@ -1,0 +1,4 @@
+name: chronos
+_target_: src.models.foundation.ChronosModel
+enabled: false
+model_id: amazon/chronos-t5-small

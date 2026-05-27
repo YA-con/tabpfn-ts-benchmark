@@ -1,0 +1,11 @@
+name: stock_provided
+_target_: src.data.loaders.load_nixtla_csv
+data_root: ../market_data_downloader
+freq: H
+horizon: 24
+context_length: 240
+markets:
+  - market_data_1h/A股上交所SS
+  - market_data_1h/港股HK
+  - market_data_1h/加密货币Crypto
+target_column: close_price

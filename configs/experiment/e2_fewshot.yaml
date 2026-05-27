@@ -1,0 +1,3 @@
+name: e2_fewshot
+low_data_context_lengths: [24, 48, 96, 168]
+metrics: [mse, mae, rmse, smape]

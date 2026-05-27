@@ -1,0 +1,4 @@
+name: tabpfn_ts
+_target_: src.models.tabpfn_ts_wrapper.TabPFNTSModel
+context_length: 512
+quantiles: [0.1, 0.5, 0.9]

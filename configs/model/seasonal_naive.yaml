@@ -1,0 +1,3 @@
+name: seasonal_naive
+_target_: src.models.statistical.SeasonalNaiveModel
+season_length: 12

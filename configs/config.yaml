@@ -1,0 +1,17 @@
+defaults:
+  - dataset: etth1
+  - model: seasonal_naive
+  - experiment: e1_zeroshot
+  - _self_
+
+seed: 42
+output_dir: results
+
+wandb:
+  project: tabpfn-quant
+  mode: offline
+  entity: null
+
+hydra:
+  run:
+    dir: outputs/${now:%Y-%m-%d}/${now:%H-%M-%S}

@@ -1,0 +1,5 @@
+name: etth1
+_target_: src.data.loaders.load_nixtla_csv
+freq: H
+horizon: 24
+context_length: 168

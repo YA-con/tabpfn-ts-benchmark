@@ -1,0 +1,17 @@
+[project]
+name = "tabpfn-quant"
+version = "0.1.0"
+description = "Benchmark TabPFN-TS across multiple time-series domains with a finance application."
+requires-python = ">=3.10,<3.11"
+
+[tool.black]
+line-length = 100
+target-version = ["py310"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+ignore = []

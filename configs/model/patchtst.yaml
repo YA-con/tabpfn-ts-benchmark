@@ -1,0 +1,5 @@
+name: patchtst
+_target_: src.models.deep.PatchTSTModel
+input_size: 168
+horizon: 24
+max_steps: 100

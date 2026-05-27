@@ -1,0 +1,11 @@
+name: e1_zeroshot
+task: smoke_sine_wave
+n_series: 3
+n_observations: 96
+horizon: 12
+freq: H
+season_length: 12
+results_subdir: e1_smoke
+models:
+  - dummy_mean
+  - seasonal_naive

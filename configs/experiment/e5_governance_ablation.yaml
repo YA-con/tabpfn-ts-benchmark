@@ -1,0 +1,6 @@
+name: e5_governance_ablation
+ablations:
+  - no_cleaning
+  - no_alignment
+  - no_normalization
+metrics: [ic, rank_ic, sharpe, max_drawdown]
