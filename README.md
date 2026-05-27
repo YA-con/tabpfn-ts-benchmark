@@ -34,7 +34,7 @@ From this machine, `bash scripts/check_a00_gpu.sh` prints the current A00 GPU st
 ```text
 tabpfn-quant/
 ├── configs/          # Hydra dataset, model, and experiment configs
-├── src/              # Governance, model, data, evaluation, backtest, and utility modules
+├── src/              # Governance, model, data registry/loaders, evaluation, backtest, and utilities
 ├── experiments/      # Runnable experiment entry points
 ├── tests/            # Metric, interface, and smoke tests
 ├── data/             # Raw and processed data placeholders
@@ -45,10 +45,20 @@ tabpfn-quant/
 
 The provided market data lives one level above this project in `../market_data_downloader` and is referenced by `configs/dataset/stock_provided.yaml`. Public benchmark datasets such as ETT, electricity, exchange-rate, traffic, weather, and other non-financial panels are part of later phases.
 
+To inspect the cross-domain dataset registry without launching experiments:
+
+```bash
+python scripts/inspect_datasets.py
+python scripts/inspect_datasets.py --dataset stock_provided --load --max-files 3
+```
+
+Benchmark outputs should use the canonical schemas in `src/evaluation/results_schema.py`.
+Planned dashboard figures are declared in `src/visualization/specs.py` so the report can be built from stable result tables.
+
 ## Roadmap
 
 - Phase 1: ✅ scaffolding, interfaces, metrics, configs, smoke test
-- Phase 2: ⏳ data governance implementation and multi-domain dataset ingestion
+- Phase 2: ⏳ data registry, governance implementation, and multi-domain dataset ingestion
 - Phase 3: ⏳ TabPFN-TS and baseline model wrappers
 - Phase 4: ⏳ benchmark runs across domains and low-data regimes
 - Phase 5: ⏳ quant backtest, ablations, and executive visual report

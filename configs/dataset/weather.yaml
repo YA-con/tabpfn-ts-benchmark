@@ -1,0 +1,6 @@
+name: weather
+_target_: src.data.registry.load_dataset
+domain: weather
+freq: 10min
+horizon: 144
+context_length: 1008

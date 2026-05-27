@@ -1,5 +1,6 @@
 name: stock_provided
-_target_: src.data.loaders.load_nixtla_csv
+_target_: src.data.registry.load_dataset
+domain: finance
 data_root: ../market_data_downloader
 freq: H
 horizon: 24

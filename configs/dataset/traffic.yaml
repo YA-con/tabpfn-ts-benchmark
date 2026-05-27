@@ -1,6 +1,6 @@
-name: electricity
+name: traffic
 _target_: src.data.registry.load_dataset
-domain: energy
+domain: traffic
 freq: H
 horizon: 24
 context_length: 168

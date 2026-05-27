@@ -1,5 +1,6 @@
 name: exchange_rate
-_target_: src.data.loaders.load_nixtla_csv
+_target_: src.data.registry.load_dataset
+domain: economics
 freq: D
 horizon: 7
 context_length: 365

@@ -19,6 +19,8 @@ The existing `../market_data_downloader` folder contains 1-hour and 1-day OHLCV 
 
 This dataset is useful for the finance application and governance/backtest phases, but it should not define the whole study. The main benchmark should also include non-financial datasets such as ETT, electricity, exchange rate, traffic, weather, and any additional public time-series panels selected in later phases.
 
+The first Phase 2 implementation step is a lightweight dataset registry in `src/data/registry.py`. It records each dataset's domain, frequency, horizon, context length, expected storage path, and loader type. `scripts/inspect_datasets.py` can print the registry and summarize loadable datasets without starting an experiment.
+
 ## Proposed experiments
 
 1. **E1 zero-shot smoke and forecasting sanity check**

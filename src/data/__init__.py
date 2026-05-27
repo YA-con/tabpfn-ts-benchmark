@@ -1,1 +1,1 @@
-"""Data loading and download utilities."""
+"""Data loading, schema, registry, and download utilities."""
