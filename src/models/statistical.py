@@ -55,7 +55,7 @@ class SeasonalNaiveModel(ForecastModel):
             raise ImportError("SeasonalNaiveModel requires statsforecast to be installed.") from exc
 
         model = StatsForecast(models=[SeasonalNaive(season_length=self.season_length)], freq=data.freq)
-        forecast = model.forecast(df=data.series, h=data.horizon)
+        forecast = model.forecast(df=data.series, h=data.horizon).reset_index()
         predictions = forecast.rename(columns={"SeasonalNaive": "y_hat"})[
             ["unique_id", "ds", "y_hat"]
         ]
