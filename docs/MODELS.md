@@ -22,6 +22,21 @@ CPU-only benchmark runs should set:
 export CUDA_VISIBLE_DEVICES=""
 ```
 
+A00 is currently configured with CUDA torch:
+
+```text
+torch==2.5.1+cu124
+CUDA runtime 12.4
+```
+
+If the venv is rebuilt, install torch with:
+
+```bash
+pip install --index-url https://download.pytorch.org/whl/cu124 \
+  torch==2.5.1 torchvision==0.20.1 torchaudio==2.5.1
+pip install --force-reinstall numpy==1.26.4 fsspec==2026.2.0
+```
+
 ## Current runnable models
 
 The pilot benchmark currently runs these models end to end:
@@ -64,9 +79,9 @@ Run the offline smoke test:
 cd /home/wanyi/zy_test/tabpfn-ts-benchmark
 export PATH=/home/wanyi/zy_test/venv/bin:$PATH
 export TABPFN_DISABLE_TELEMETRY=1
-export CUDA_VISIBLE_DEVICES=""
-python scripts/run_tabpfn_ts_smoke.py --device cpu
+export CUDA_VISIBLE_DEVICES=2
+python scripts/run_tabpfn_ts_smoke.py --device cuda --output results/tabpfn_ts_smoke_gpu.csv
 ```
 
-This has been verified with CPU torch on A00. For GPU inference, the environment
-needs a CUDA-enabled torch build; the current A00 venv reports `torch==2.5.1+cpu`.
+This has been verified on A00 with the local time-series checkpoint and GPU 2.
+The script writes `results/tabpfn_ts_smoke_gpu.csv`.
