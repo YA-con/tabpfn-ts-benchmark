@@ -55,6 +55,8 @@ python scripts/inspect_datasets.py --dataset stock_provided --load --max-files 3
 Benchmark outputs should use the canonical schemas in `src/evaluation/results_schema.py`.
 Planned dashboard figures are declared in `src/visualization/specs.py` so the report can be built from stable result tables.
 
+Dataset placement and materialization are documented in `docs/DATASETS.md`.
+
 ## Roadmap
 
 - Phase 1: ✅ scaffolding, interfaces, metrics, configs, smoke test
