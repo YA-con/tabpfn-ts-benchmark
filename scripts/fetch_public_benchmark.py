@@ -24,6 +24,7 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument("--project-root", default=".", help="Project root used to resolve data paths.")
     parser.add_argument("--overwrite", action="store_true", help="Overwrite an existing raw file.")
+    parser.add_argument("--retries", type=int, default=3, help="Download retry count.")
     return parser.parse_args()
 
 
@@ -35,6 +36,7 @@ def main() -> None:
         name=args.dataset,
         project_root=args.project_root,
         overwrite=args.overwrite,
+        retries=args.retries,
     )
     print(path)
 
