@@ -68,6 +68,33 @@ def test_load_provided_market_dataset(tmp_path: Path) -> None:
     assert loaded["y"].tolist() == [1.1, 2.1]
 
 
+def test_load_provided_market_dataset_skips_invalid_files(tmp_path: Path) -> None:
+    """Invalid OHLCV files can be skipped while loading a market panel."""
+
+    market_dir = tmp_path / "market_data_1h" / "港股HK"
+    market_dir.mkdir(parents=True)
+    pd.DataFrame(
+        {
+            "trade_date": ["2024-01-01 09:30:00"],
+            "close_price": [1.1],
+        }
+    ).to_csv(market_dir / "good.csv", index=False)
+    pd.DataFrame(
+        {
+            "trade_date": ["2024-01-01 09:30:00"],
+            "close_price": [None],
+        }
+    ).to_csv(market_dir / "bad.csv", index=False)
+
+    loaded = load_provided_market_dataset(
+        data_root=tmp_path,
+        markets=["market_data_1h/港股HK"],
+        skip_invalid=True,
+    )
+
+    assert loaded["unique_id"].tolist() == ["good"]
+
+
 def test_load_public_benchmark_csv(tmp_path: Path) -> None:
     """Wide public benchmark CSV files melt into Nixtla format."""
 

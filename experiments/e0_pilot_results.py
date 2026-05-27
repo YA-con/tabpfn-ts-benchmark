@@ -67,9 +67,9 @@ def _load_pilot_datasets(project_root: Path) -> list[tuple[str, str, str, int, i
     ]
     processed_stock = project_root / "data" / "processed" / "stock_provided" / "series.parquet"
     if not processed_stock.exists():
-        materialize_dataset("stock_provided", project_root=project_root, max_files=5)
+        materialize_dataset("stock_provided", project_root=project_root)
     stock = load_processed_dataset("stock_provided", project_root=project_root)
-    datasets.append(("stock_provided_sample", "finance", "h", 24, 240, stock))
+    datasets.append(("stock_provided", "finance", "h", 24, 240, stock))
     return datasets
 
 
@@ -99,7 +99,8 @@ def _evaluate_dataset(
     metrics: list[dict[str, object]] = []
     predictions: list[pd.DataFrame] = []
     season_length = max(1, min(horizon, 24))
-    for model_name in ["dummy_mean", "seasonal_naive"]:
+    model_names = ["dummy_mean", "seasonal_naive", "moving_average", "linear_trend"]
+    for model_name in model_names:
         start_fit = time.perf_counter()
         train_stats = train.groupby("unique_id")["y"].mean()
         train_time = time.perf_counter() - start_fit
@@ -110,10 +111,22 @@ def _evaluate_dataset(
             pred_group = test_group[["unique_id", "ds", "y"]].copy()
             if model_name == "dummy_mean":
                 pred_group["y_hat"] = float(train_stats.loc[unique_id])
-            else:
+            elif model_name == "seasonal_naive":
                 seasonal_values = history["y"].tail(season_length).to_numpy()
                 repeats = int(np.ceil(len(pred_group) / len(seasonal_values)))
                 pred_group["y_hat"] = np.tile(seasonal_values, repeats)[: len(pred_group)]
+            elif model_name == "moving_average":
+                window = min(context_length, max(horizon, 24), len(history))
+                pred_group["y_hat"] = float(history["y"].tail(window).mean())
+            elif model_name == "linear_trend":
+                window = min(context_length, len(history))
+                values = history["y"].tail(window).to_numpy(dtype=float)
+                x = np.arange(len(values), dtype=float)
+                slope, intercept = np.polyfit(x, values, deg=1)
+                future_x = np.arange(len(values), len(values) + len(pred_group), dtype=float)
+                pred_group["y_hat"] = intercept + slope * future_x
+            else:
+                raise ValueError(f"Unknown pilot model: {model_name}")
             prediction_parts.append(pred_group)
         joined = pd.concat(prediction_parts, ignore_index=True)
         inference_time_s = time.perf_counter() - start_predict

@@ -19,8 +19,10 @@ PALETTE = {
 }
 
 MODEL_LABELS = {
-    "dummy_mean": "均值基线",
-    "seasonal_naive": "季节朴素",
+    "dummy_mean": "Historical Mean",
+    "seasonal_naive": "Seasonal Naive",
+    "moving_average": "Moving Average",
+    "linear_trend": "Linear Trend",
 }
 
 DOMAIN_LABELS = {
@@ -37,6 +39,7 @@ DATASET_LABELS = {
     "synthetic_weather": "合成天气",
     "synthetic_exchange": "合成汇率",
     "stock_provided_sample": "现有金融样本",
+    "stock_provided": "现有金融数据",
 }
 
 METRIC_LABELS = {

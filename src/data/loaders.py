@@ -28,6 +28,7 @@ def load_provided_market_dataset(
     markets: list[str],
     target_column: str = "close_price",
     max_files: int | None = None,
+    skip_invalid: bool = True,
 ) -> pd.DataFrame:
     """Load provided OHLCV market CSV files into one Nixtla-format panel.
 
@@ -40,6 +41,7 @@ def load_provided_market_dataset(
         raise FileNotFoundError(f"Provided market data root does not exist: {root}")
 
     frames: list[pd.DataFrame] = []
+    skipped: list[str] = []
     for market in markets:
         market_dir = root / market
         if not market_dir.exists():
@@ -47,18 +49,25 @@ def load_provided_market_dataset(
         for path in sorted(market_dir.glob("*.csv")):
             if max_files is not None and len(frames) >= max_files:
                 break
-            frames.append(
-                load_nixtla_csv(
-                    path=path,
-                    unique_id=path.stem,
-                    target_column=target_column,
+            try:
+                frames.append(
+                    load_nixtla_csv(
+                        path=path,
+                        unique_id=path.stem,
+                        target_column=target_column,
+                    )
                 )
-            )
+            except ValueError:
+                if not skip_invalid:
+                    raise
+                skipped.append(str(path))
         if max_files is not None and len(frames) >= max_files:
             break
 
     if not frames:
         raise ValueError(f"No CSV files found under {root} for markets={markets}.")
+    if skipped:
+        print(f"Skipped {len(skipped)} invalid market files.")
     return validate_nixtla_frame(pd.concat(frames, ignore_index=True))
 
 
