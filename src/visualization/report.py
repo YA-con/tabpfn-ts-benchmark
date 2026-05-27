@@ -139,11 +139,13 @@ def _heatmap(metrics: pd.DataFrame, metric: str) -> str:
     left = 136
     top = 58
     width = left + cell_w * len(domains) + 28
-    height = top + cell_h * len(models) + 36
+    legend_y = top + cell_h * len(models) + 22
+    height = legend_y + 46
     pieces = [f'<svg viewBox="0 0 {width} {height}" class="chart">']
     pieces.append(
         f'<text x="20" y="24" class="title">{escape(METRIC_LABELS.get(metric, metric.upper()))} 领域热力图</text>'
     )
+    pieces.append('<text x="20" y="44" class="axis">颜色越深表示误差越高</text>')
     for c, domain in enumerate(domains):
         pieces.append(
             f'<text x="{left + c * cell_w + cell_w / 2}" y="48" class="axis center">'
@@ -167,6 +169,23 @@ def _heatmap(metrics: pd.DataFrame, metric: str) -> str:
                 f'<text x="{x + (cell_w - 8) / 2}" y="{y + 31}" class="cell">'
                 f"{value:.3f}</text>"
             )
+    legend_x = left
+    legend_w = min(260, cell_w * max(1, len(domains)) - 8)
+    steps = 10
+    step_w = legend_w / steps
+    for idx in range(steps):
+        intensity = idx / max(1, steps - 1)
+        red = int(248 - intensity * 210)
+        green = int(250 - intensity * 96)
+        blue = int(252 - intensity * 38)
+        pieces.append(
+            f'<rect x="{legend_x + idx * step_w:.1f}" y="{legend_y}" width="{step_w + 0.5:.1f}" '
+            f'height="12" fill="rgb({red},{green},{blue})"></rect>'
+        )
+    pieces.append(f'<text x="{legend_x}" y="{legend_y + 30}" class="axis">低误差 {min_v:.3f}</text>')
+    pieces.append(
+        f'<text x="{legend_x + legend_w}" y="{legend_y + 30}" class="axis end">高误差 {max_v:.3f}</text>'
+    )
     pieces.append("</svg>")
     return "".join(pieces)
 
@@ -196,6 +215,7 @@ def _rank_bump_chart(metrics: pd.DataFrame) -> str:
 
     pieces = [f'<svg viewBox="0 0 {width} {height}" class="chart">']
     pieces.append('<text x="20" y="25" class="title">模型排名变化图（按数据集 SMAPE 排名）</text>')
+    pieces.append(f'<text x="{width - 104}" y="25" class="axis">1 = 最好</text>')
     for idx, dataset in enumerate(datasets):
         x = x_pos(idx)
         pieces.append(f'<line x1="{x:.1f}" y1="{top}" x2="{x:.1f}" y2="{height - bottom}" stroke="#e2e8f0"/>')
@@ -257,6 +277,7 @@ def _error_scatter(metrics: pd.DataFrame) -> str:
         )
     legend_x = left + 12
     legend_y = top + 16
+    pieces.append(f'<text x="{legend_x - 2}" y="{legend_y - 14}" class="axis">领域图例</text>')
     for idx, domain in enumerate(sorted(metrics["domain"].unique())):
         y = legend_y + idx * 20
         color = PALETTE.get(str(domain), "#334155")
@@ -344,14 +365,16 @@ def _forecast_gallery(predictions: pd.DataFrame, metrics: pd.DataFrame, max_pane
         min_y = float(y_values.min())
         max_y = float(y_values.max())
         width = 360
-        height = 190
+        height = 214
         pad = 32
+        chart_bottom = height - 56
+        legend_y = height - 18
 
         def points(column: str) -> str:
             coords = []
             for idx, value in enumerate(panel[column].astype(float)):
                 x = pad + _scale(idx, 0, max(1, len(panel) - 1), width - 2 * pad)
-                y = height - pad - _scale(value, min_y, max_y, height - 2 * pad)
+                y = chart_bottom - _scale(value, min_y, max_y, chart_bottom - pad)
                 coords.append(f"{x:.1f},{y:.1f}")
             return " ".join(coords)
 
@@ -363,8 +386,12 @@ def _forecast_gallery(predictions: pd.DataFrame, metrics: pd.DataFrame, max_pane
             f'<text x="18" y="40" class="mini-sub">{escape(str(key["unique_id"]))}</text>'
             f'<polyline points="{points("y")}" fill="none" stroke="#111827" stroke-width="2.2"/>'
             f'<polyline points="{points("y_hat")}" fill="none" stroke="{color}" stroke-width="2.2"/>'
-            f'<line x1="{pad}" y1="{height - pad}" x2="{width - pad}" y2="{height - pad}" '
+            f'<line x1="{pad}" y1="{chart_bottom}" x2="{width - pad}" y2="{chart_bottom}" '
             f'stroke="#cbd5e1"/>'
+            f'<line x1="18" y1="{legend_y}" x2="48" y2="{legend_y}" stroke="#111827" stroke-width="2.2"/>'
+            f'<text x="54" y="{legend_y + 4}" class="mini-sub">真实值</text>'
+            f'<line x1="112" y1="{legend_y}" x2="142" y2="{legend_y}" stroke="{color}" stroke-width="2.2"/>'
+            f'<text x="148" y="{legend_y + 4}" class="mini-sub">预测值</text>'
             f"</svg>"
         )
     return '<div class="gallery">' + "".join(panels) + "</div>"
@@ -424,6 +451,7 @@ section {{ padding: 12px 44px 26px; }}
 .title {{ font-size: 18px; font-weight: 700; fill: #0f172a; }}
 .axis {{ font-size: 13px; fill: #475569; }}
 .center {{ text-anchor: middle; }}
+.end {{ text-anchor: end; }}
 .value {{ font-size: 13px; fill: #334155; }}
 .cell {{ text-anchor: middle; font-size: 14px; font-weight: 700; fill: #0f172a; }}
 .gallery {{ display: grid; grid-template-columns: repeat(2, minmax(260px, 1fr)); gap: 14px; }}
