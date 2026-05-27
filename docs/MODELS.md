@@ -85,3 +85,36 @@ python scripts/run_tabpfn_ts_smoke.py --device cuda --output results/tabpfn_ts_s
 
 This has been verified on A00 with the local time-series checkpoint and GPU 2.
 The script writes `results/tabpfn_ts_smoke_gpu.csv`.
+
+## TabPFN-TS pilot benchmark
+
+The first controlled benchmark with TabPFN-TS is intentionally small:
+
+```bash
+cd /home/wanyi/zy_test/tabpfn-ts-benchmark
+export PATH=/home/wanyi/zy_test/venv/bin:$PATH
+export TABPFN_DISABLE_TELEMETRY=1
+export CUDA_VISIBLE_DEVICES=2
+python -B -m experiments.e0_tabpfn_ts_pilot
+```
+
+Default limits:
+
+```text
+datasets: synthetic_energy, stock_provided
+series per dataset: 1
+context length: 48
+horizon: 6
+checkpoint: /home/wanyi/zy_test/tabpfn_weights/tabpfn-v3-regressor-v3_20260506_timeseries.ckpt
+```
+
+Outputs:
+
+```text
+results/tabpfn_ts_pilot/forecast_metrics.csv
+results/tabpfn_ts_pilot/forecast_predictions.csv
+results/tabpfn_ts_pilot/report.html
+```
+
+This pilot verifies the full path from local checkpoint to GPU inference and
+HTML reporting before scaling TabPFN-TS to longer contexts and more series.

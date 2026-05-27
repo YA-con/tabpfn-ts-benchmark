@@ -18,6 +18,7 @@ PALETTE = {
     "hist_gradient_boosting_ar": "#0ea5e9",
     "lightgbm_ar": "#65a30d",
     "xgboost_ar": "#be123c",
+    "tabpfn_ts": "#db2777",
     "energy": "#2563eb",
     "traffic": "#f97316",
     "weather": "#0891b2",
@@ -34,6 +35,7 @@ MODEL_LABELS = {
     "hist_gradient_boosting_ar": "Gradient Boosting AR",
     "lightgbm_ar": "LightGBM AR",
     "xgboost_ar": "XGBoost AR",
+    "tabpfn_ts": "TabPFN-TS",
 }
 
 DOMAIN_LABELS = {
