@@ -18,6 +18,54 @@ PALETTE = {
     "finance": "#16a34a",
 }
 
+MODEL_LABELS = {
+    "dummy_mean": "均值基线",
+    "seasonal_naive": "季节朴素",
+}
+
+DOMAIN_LABELS = {
+    "energy": "能源",
+    "traffic": "交通",
+    "weather": "天气",
+    "economics": "汇率/经济",
+    "finance": "金融",
+}
+
+DATASET_LABELS = {
+    "synthetic_energy": "合成能源",
+    "synthetic_traffic": "合成交通",
+    "synthetic_weather": "合成天气",
+    "synthetic_exchange": "合成汇率",
+    "stock_provided_sample": "现有金融样本",
+}
+
+METRIC_LABELS = {
+    "smape": "SMAPE",
+    "mse": "MSE",
+    "mae": "MAE",
+    "rmse": "RMSE",
+    "wape": "WAPE",
+    "mase": "MASE",
+}
+
+
+def _label_model(model: object) -> str:
+    """Return a Chinese display label for a model."""
+
+    return MODEL_LABELS.get(str(model), str(model))
+
+
+def _label_domain(domain: object) -> str:
+    """Return a Chinese display label for a domain."""
+
+    return DOMAIN_LABELS.get(str(domain), str(domain))
+
+
+def _label_dataset(dataset: object) -> str:
+    """Return a Chinese display label for a dataset."""
+
+    return DATASET_LABELS.get(str(dataset), str(dataset))
+
 
 def _scale(value: float, min_value: float, max_value: float, width: int) -> float:
     """Scale a numeric value into a pixel coordinate."""
@@ -49,7 +97,7 @@ def _bar_chart(metrics: pd.DataFrame, metric: str) -> str:
         bar_w = _scale(float(row[metric]), 0.0, max_value, chart_w)
         color = PALETTE.get(str(row["model"]), "#334155")
         rows.append(
-            f'<text x="20" y="{y + 21}" class="axis">{escape(str(row["model"]))}</text>'
+            f'<text x="20" y="{y + 21}" class="axis">{escape(_label_model(row["model"]))}</text>'
             f'<rect x="{left}" y="{y}" width="{bar_w:.1f}" height="26" rx="4" fill="{color}">'
             f"</rect>"
             f'<text x="{left + bar_w + 8:.1f}" y="{y + 19}" class="value">'
@@ -57,7 +105,7 @@ def _bar_chart(metrics: pd.DataFrame, metric: str) -> str:
         )
     return (
         f'<svg viewBox="0 0 {width} {height}" class="chart">'
-        f'<text x="20" y="24" class="title">Average {escape(metric.upper())} by model</text>'
+        f'<text x="20" y="24" class="title">各模型平均{escape(METRIC_LABELS.get(metric, metric.upper()))}</text>'
         + "".join(rows)
         + "</svg>"
     )
@@ -79,14 +127,18 @@ def _heatmap(metrics: pd.DataFrame, metric: str) -> str:
     width = left + cell_w * len(domains) + 28
     height = top + cell_h * len(models) + 36
     pieces = [f'<svg viewBox="0 0 {width} {height}" class="chart">']
-    pieces.append(f'<text x="20" y="24" class="title">{escape(metric.upper())} heatmap</text>')
+    pieces.append(
+        f'<text x="20" y="24" class="title">{escape(METRIC_LABELS.get(metric, metric.upper()))} 领域热力图</text>'
+    )
     for c, domain in enumerate(domains):
         pieces.append(
             f'<text x="{left + c * cell_w + cell_w / 2}" y="48" class="axis center">'
-            f"{escape(str(domain))}</text>"
+            f"{escape(_label_domain(domain))}</text>"
         )
     for r, model in enumerate(models):
-        pieces.append(f'<text x="20" y="{top + r * cell_h + 34}" class="axis">{escape(str(model))}</text>')
+        pieces.append(
+            f'<text x="20" y="{top + r * cell_h + 34}" class="axis">{escape(_label_model(model))}</text>'
+        )
         for c, domain in enumerate(domains):
             value = float(pivot.loc[model, domain])
             intensity = _scale(value, min_v, max_v, 1.0)
@@ -136,8 +188,8 @@ def _forecast_gallery(predictions: pd.DataFrame, max_panels: int = 4) -> str:
         color = PALETTE.get(str(key["model"]), "#334155")
         panels.append(
             f'<svg viewBox="0 0 {width} {height}" class="mini">'
-            f'<text x="18" y="22" class="mini-title">{escape(str(key["dataset"]))} | '
-            f'{escape(str(key["model"]))}</text>'
+            f'<text x="18" y="22" class="mini-title">{escape(_label_dataset(key["dataset"]))} | '
+            f'{escape(_label_model(key["model"]))}</text>'
             f'<text x="18" y="40" class="mini-sub">{escape(str(key["unique_id"]))}</text>'
             f'<polyline points="{points("y")}" fill="none" stroke="#111827" stroke-width="2.2"/>'
             f'<polyline points="{points("y_hat")}" fill="none" stroke="{color}" stroke-width="2.2"/>'
@@ -158,12 +210,35 @@ def build_pilot_report(
     output = Path(output_path)
     output.parent.mkdir(parents=True, exist_ok=True)
     best = metrics.sort_values("smape").iloc[0]
-    domains = ", ".join(sorted(metrics["domain"].unique()))
+    domains = "、".join(_label_domain(domain) for domain in sorted(metrics["domain"].unique()))
+    display_metrics = metrics.copy()
+    display_metrics["model"] = display_metrics["model"].map(_label_model)
+    display_metrics["dataset"] = display_metrics["dataset"].map(_label_dataset)
+    display_metrics["domain"] = display_metrics["domain"].map(_label_domain)
+    display_metrics = display_metrics.rename(
+        columns={
+            "run_id": "运行ID",
+            "model": "模型",
+            "dataset": "数据集",
+            "domain": "领域",
+            "horizon": "预测步长",
+            "context_length": "上下文长度",
+            "mse": "MSE",
+            "mae": "MAE",
+            "rmse": "RMSE",
+            "smape": "SMAPE",
+            "wape": "WAPE",
+            "mase": "MASE",
+            "train_time_s": "训练时间(秒)",
+            "inference_time_s": "推理时间(秒)",
+            "gpu_memory_mb": "GPU显存(MB)",
+        }
+    )
     html = f"""<!doctype html>
-<html lang="en">
+<html lang="zh-CN">
 <head>
 <meta charset="utf-8"/>
-<title>TabPFN-TS Pilot Results</title>
+<title>TabPFN-TS 初步实验结果</title>
 <style>
 body {{ margin: 0; font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   background: #f8fafc; color: #0f172a; }}
@@ -193,19 +268,19 @@ th {{ color: #475569; }}
 </head>
 <body>
 <header>
-  <h1>TabPFN-TS Pilot Results</h1>
-  <div class="subtitle">CPU-only pilot run across synthetic cross-domain sanity datasets and a provided finance sample. This is the report scaffold that later full benchmark runs will reuse.</div>
+  <h1>TabPFN-TS 初步实验结果</h1>
+  <div class="subtitle">CPU-only 初步实验，覆盖跨领域合成 sanity 数据集与现有金融样本。当前页面是后续完整 benchmark 的结果展示模板。</div>
 </header>
 <div class="grid">
-  <div class="stat">Datasets<b>{metrics["dataset"].nunique()}</b></div>
-  <div class="stat">Domains<b>{escape(domains)}</b></div>
-  <div class="stat">Best SMAPE<b>{escape(str(best["model"]))} | {float(best["smape"]):.3f}</b></div>
+  <div class="stat">数据集数量<b>{metrics["dataset"].nunique()}</b></div>
+  <div class="stat">覆盖领域<b>{escape(domains)}</b></div>
+  <div class="stat">最佳 SMAPE<b>{escape(_label_model(best["model"]))} | {float(best["smape"]):.3f}</b></div>
 </div>
 <section>
   <div class="panel">{_bar_chart(metrics, "smape")}</div>
   <div class="panel">{_heatmap(metrics, "smape")}</div>
-  <div class="panel"><h2>Forecast Gallery</h2>{_forecast_gallery(predictions)}</div>
-  <div class="panel"><h2>Metric Table</h2>{metrics.round(5).to_html(index=False)}</div>
+  <div class="panel"><h2>预测曲线样例</h2>{_forecast_gallery(predictions)}</div>
+  <div class="panel"><h2>指标明细表</h2>{display_metrics.round(5).to_html(index=False)}</div>
 </section>
 </body>
 </html>"""

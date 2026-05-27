@@ -52,5 +52,6 @@ def test_build_pilot_report(tmp_path: Path) -> None:
     build_pilot_report(metrics, predictions, output)
 
     text = output.read_text(encoding="utf-8")
-    assert "TabPFN-TS Pilot Results" in text
+    assert "TabPFN-TS 初步实验结果" in text
+    assert "指标明细表" in text
     assert "<svg" in text
