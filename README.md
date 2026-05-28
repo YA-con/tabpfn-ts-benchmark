@@ -13,7 +13,9 @@ This project benchmarks TabPFN-TS against statistical, deep learning, and founda
 
 ## Quick start
 
-Experiments should be run on `A00`, not on the local machine. Before launching any job, check GPU utilization and avoid starting runs when another user is occupying the card.
+Experiments should be run on the least busy available remote GPU host (`A00` or
+`4080s`), not on the local machine. Before launching any job, check GPU
+utilization and avoid starting runs when another user is occupying the card.
 
 ```bash
 ssh A00
@@ -27,7 +29,25 @@ bash scripts/run_smoke_test.sh
 pytest tests/
 ```
 
-From this machine, `bash scripts/check_a00_gpu.sh` prints the current A00 GPU status without starting an experiment.
+From this machine, `bash scripts/check_experiment_hosts.sh` prints the current
+remote GPU and project sync status without starting an experiment.
+
+## Experiment reports
+
+Generate a reusable HTML report from any run directory that contains
+`forecast_metrics.csv` and optionally `forecast_predictions.csv`:
+
+```bash
+python scripts/generate_report.py \
+  --run-dir results/tabpfn_ts_a100_c96_h12 \
+  --baseline-dir results/pilot_baseline \
+  --config configs/config.yaml \
+  --out reports/tabpfn_ts_a100_c96_h12
+```
+
+The report writes `index.html`, `metrics.json`, `summary.csv`, and matplotlib
+SVG figures under `assets/`. Missing metrics or logs are shown as N/A rather
+than being fabricated.
 
 ## Project layout
 

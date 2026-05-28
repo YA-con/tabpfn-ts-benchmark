@@ -10,6 +10,7 @@ import pandas as pd
 
 from experiments.e0_pilot_results import _evaluate_dataset, _load_pilot_datasets
 from src.evaluation.point_metrics import mae, mase, mse, rmse, smape, wape
+from src.reporting import generate_experiment_report
 from src.visualization.report import build_pilot_report
 
 
@@ -170,8 +171,17 @@ def main() -> None:
     metrics_df.to_csv(output_dir / "forecast_metrics.csv", index=False)
     predictions_df.to_csv(output_dir / "forecast_predictions.csv", index=False)
     build_pilot_report(metrics_df, predictions_df, output_dir / "report.html")
+    baseline_dir = project_root / "results" / "pilot_baseline"
+    baseline_dirs = [baseline_dir] if baseline_dir.exists() else []
+    report_path = generate_experiment_report(
+        run_dir=output_dir,
+        out_dir=project_root / "reports" / output_dir.name,
+        baseline_dirs=baseline_dirs,
+        config_paths=[project_root / "configs" / "config.yaml"],
+    )
     print(metrics_df.groupby("model")["smape"].mean().sort_values())
     print(f"Wrote {output_dir / 'report.html'}")
+    print(f"Wrote {report_path}")
 
 
 if __name__ == "__main__":

@@ -14,6 +14,7 @@ from sklearn.preprocessing import StandardScaler
 
 from src.data.materialize import load_processed_dataset, materialize_dataset
 from src.evaluation.point_metrics import mae, mase, mse, rmse, smape, wape
+from src.reporting import generate_experiment_report
 from src.visualization.report import build_pilot_report
 
 
@@ -344,7 +345,13 @@ def main() -> None:
     metrics_df.to_csv(output_dir / "forecast_metrics.csv", index=False)
     predictions_df.to_csv(output_dir / "forecast_predictions.csv", index=False)
     build_pilot_report(metrics_df, predictions_df, output_dir / "report.html")
+    report_path = generate_experiment_report(
+        run_dir=output_dir,
+        out_dir=project_root / "reports" / output_dir.name,
+        config_paths=[project_root / "configs" / "config.yaml"],
+    )
     print(f"Wrote {output_dir / 'report.html'}")
+    print(f"Wrote {report_path}")
 
 
 if __name__ == "__main__":
