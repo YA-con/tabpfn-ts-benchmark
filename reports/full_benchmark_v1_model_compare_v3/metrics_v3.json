@@ -1,0 +1,129 @@
+{
+  "summary": [
+    {
+      "model": "tabpfn_ts",
+      "mean_smape": 1.4389401675027365,
+      "median_smape": 1.0508654970786684,
+      "std_smape": 1.3502108302896596,
+      "avg_rank": 2.44,
+      "median_rank": 2.0,
+      "wins": 7,
+      "top3": 19,
+      "n": 25,
+      "mean_inference_s": 1.6351496984343976,
+      "overall_order": 1
+    },
+    {
+      "model": "lightgbm_ar",
+      "mean_smape": 2.3851679105399124,
+      "median_smape": 1.163256185769178,
+      "std_smape": 2.9600006361692994,
+      "avg_rank": 3.28,
+      "median_rank": 3.0,
+      "wins": 4,
+      "top3": 13,
+      "n": 25,
+      "mean_inference_s": 0.021478637512773225,
+      "overall_order": 2
+    },
+    {
+      "model": "ridge_ar",
+      "mean_smape": 3.5996971644947298,
+      "median_smape": 0.702154991506423,
+      "std_smape": 7.6588220404048695,
+      "avg_rank": 3.4,
+      "median_rank": 3.0,
+      "wins": 9,
+      "top3": 14,
+      "n": 25,
+      "mean_inference_s": 0.008501411210745524,
+      "overall_order": 3
+    },
+    {
+      "model": "hist_gradient_boosting_ar",
+      "mean_smape": 2.6353851301629936,
+      "median_smape": 1.3102109770402248,
+      "std_smape": 3.2030952106473216,
+      "avg_rank": 3.92,
+      "median_rank": 4.0,
+      "wins": 2,
+      "top3": 9,
+      "n": 25,
+      "mean_inference_s": 0.1173197114374488,
+      "overall_order": 4
+    },
+    {
+      "model": "xgboost_ar",
+      "mean_smape": 2.388141793850419,
+      "median_smape": 1.227825152157736,
+      "std_smape": 2.761015630168513,
+      "avg_rank": 4.04,
+      "median_rank": 4.0,
+      "wins": 2,
+      "top3": 11,
+      "n": 25,
+      "mean_inference_s": 0.023295316165313076,
+      "overall_order": 5
+    },
+    {
+      "model": "linear_trend",
+      "mean_smape": 11.210947477575376,
+      "median_smape": 10.637875328289011,
+      "std_smape": 11.016932329287307,
+      "avg_rank": 6.48,
+      "median_rank": 8.0,
+      "wins": 1,
+      "top3": 6,
+      "n": 25,
+      "mean_inference_s": 0.0028862841892987002,
+      "overall_order": 6
+    },
+    {
+      "model": "moving_average",
+      "mean_smape": 8.13132554425872,
+      "median_smape": 4.663687628220516,
+      "std_smape": 6.603381755921182,
+      "avg_rank": 6.68,
+      "median_rank": 7.0,
+      "wins": 0,
+      "top3": 0,
+      "n": 25,
+      "mean_inference_s": 0.002642612205818236,
+      "overall_order": 7
+    },
+    {
+      "model": "seasonal_naive",
+      "mean_smape": 9.065572235248665,
+      "median_smape": 3.1991142987639267,
+      "std_smape": 10.988391077240795,
+      "avg_rank": 6.96,
+      "median_rank": 7.0,
+      "wins": 0,
+      "top3": 2,
+      "n": 25,
+      "mean_inference_s": 0.0026869715005158877,
+      "overall_order": 8
+    },
+    {
+      "model": "dummy_mean",
+      "mean_smape": 13.2761122392645,
+      "median_smape": 13.562372436628326,
+      "std_smape": 9.283167960146415,
+      "avg_rank": 7.8,
+      "median_rank": 9.0,
+      "wins": 0,
+      "top3": 1,
+      "n": 25,
+      "mean_inference_s": 0.0027630899287759804,
+      "overall_order": 9
+    }
+  ],
+  "figures": [
+    "00_metric_strip.svg",
+    "01_average_rank_forest_clean.svg",
+    "02_paired_delta_clean.svg",
+    "03_rank_heatmap_clean.svg",
+    "04_dataset_small_multiples_clean.svg",
+    "05_pareto_clean.svg"
+  ]
+}
