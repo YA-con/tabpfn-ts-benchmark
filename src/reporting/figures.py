@@ -241,15 +241,56 @@ def plot_runtime(metrics: pd.DataFrame, out: Path) -> str | None:
     return _save(fig, out / "runtime.svg")
 
 
+def plot_baseline_improvement(comparison: pd.DataFrame, out: Path) -> str | None:
+    """Baseline improvement chart based on computed comparison rows."""
+
+    required = {"baseline", "absolute_difference", "relative_improvement_pct", "metric"}
+    if comparison.empty or not required.issubset(comparison.columns):
+        return None
+    frame = comparison.dropna(subset=["absolute_difference", "relative_improvement_pct"]).copy()
+    if frame.empty:
+        return None
+    _style()
+    labels = frame["baseline"].astype(str).tolist()
+    absolute = frame["absolute_difference"].astype(float).to_numpy()
+    relative = frame["relative_improvement_pct"].astype(float).to_numpy()
+    y = np.arange(len(frame))
+    fig, ax1 = plt.subplots(figsize=(9.6, max(3.8, 0.55 * len(frame) + 2.8)))
+    colors = ["#16a34a" if value >= 0 else "#dc2626" for value in absolute]
+    ax1.barh(y, absolute, color=colors, alpha=0.82, label="Absolute improvement")
+    ax1.axvline(0, color="#0f172a", linewidth=1.1)
+    ax1.set_yticks(y, labels)
+    ax1.set_xlabel("Absolute improvement")
+    ax1.set_title(f"Baseline 改变量对比（{frame['metric'].iloc[0].upper()}）")
+    ax1.grid(axis="x")
+    ax2 = ax1.twiny()
+    ax2.plot(relative, y, color="#0ea5e9", marker="o", linewidth=2.0, label="Relative improvement (%)")
+    ax2.set_xlabel("Relative improvement (%)")
+    for idx, (abs_value, rel_value) in enumerate(zip(absolute, relative, strict=True)):
+        ax1.text(
+            abs_value,
+            idx,
+            f" {abs_value:+.3g} / {rel_value:+.2f}%",
+            va="center",
+            color="#334155",
+        )
+    return _save(fig, out / "baseline_improvement.svg")
+
+
 def generate_matplotlib_figures(
     metrics: pd.DataFrame | None,
     predictions: pd.DataFrame | None,
     assets_dir: Path,
     primary_metric: str = "smape",
+    comparison: pd.DataFrame | None = None,
 ) -> list[dict[str, str]]:
     """Generate available figures and return metadata for HTML rendering."""
 
     figures: list[dict[str, str]] = []
+    if comparison is not None and not comparison.empty:
+        filename = plot_baseline_improvement(comparison, assets_dir)
+        if filename:
+            figures.append({"title": "Baseline 改变量图", "file": filename})
     if metrics is not None and not metrics.empty:
         for title, filename in [
             ("Baseline/模型平均指标柱状图", plot_metric_bar(metrics, primary_metric, assets_dir)),

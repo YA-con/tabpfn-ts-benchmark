@@ -159,6 +159,7 @@ def render_html_report(
     environment: dict[str, Any],
     warnings: list[str],
     primary_metric: str,
+    conclusions: list[str] | None = None,
 ) -> None:
     """Write the final HTML report."""
 
@@ -177,6 +178,9 @@ def render_html_report(
         for fig in figures
     )
     raw_metrics = metrics.head(200) if metrics is not None else None
+    conclusion_html = "".join(
+        f"<li>{escape(item)}</li>" for item in (conclusions or ["暂无自动结论。"])
+    )
     html = f"""<!doctype html>
 <html lang="zh-CN">
 <head>
@@ -214,6 +218,8 @@ h3 {{ margin: 0 0 10px; font-size: 15px; }}
 .metric-name {{ color: var(--muted); font-size: 12px; font-weight: 800; }}
 .metric-value {{ margin-top: 6px; font-size: 28px; font-weight: 850; color: var(--accent); }}
 .metric-sub {{ margin-top: 6px; color: #475569; font-size: 12px; }}
+.conclusion-list {{ display: grid; gap: 10px; margin: 0; padding: 0; list-style: none; }}
+.conclusion-list li {{ border-left: 4px solid var(--accent); background: #f8fafc; padding: 12px 14px; border-radius: 6px; line-height: 1.55; }}
 .figure-grid {{ display: grid; grid-template-columns: repeat(2, minmax(420px, 1fr)); gap: 16px; }}
 .figure-card {{ border: 1px solid #e2e8f0; border-radius: 8px; padding: 14px; background: #fbfdff; overflow-x: auto; }}
 .figure-link {{ display: block; }}
@@ -281,6 +287,7 @@ pre {{ margin: 12px 0 0; white-space: pre-wrap; font-size: 12px; line-height: 1.
     <div class="stat"><span>指标行数</span><b>{metric_rows}</b></div>
     <div class="stat"><span>预测行数</span><b>{prediction_rows}</b></div>
   </div>
+  <section><h2>结论摘要</h2><ul class="conclusion-list">{conclusion_html}</ul></section>
   <section><h2>核心指标卡片</h2>{_metric_cards(summaries)}</section>
   <section><h2>Baseline 对比</h2><div class="table-wrap">{_table(comparison, "没有提供 baseline，或 baseline 指标不可用。")}</div></section>
   <section><h2>动态交互图表</h2>{_interactive_section(metrics, predictions, primary_metric)}</section>
