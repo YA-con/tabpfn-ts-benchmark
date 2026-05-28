@@ -10,19 +10,24 @@ main { max-width:1440px; margin:0 auto; padding:34px; }
 header { padding:28px 0 22px; border-bottom:1px solid #dbe4ef; }
 h1 { margin:0 0 10px; font-size:44px; letter-spacing:0; }
 .sub { color:#64748b; line-height:1.7; max-width:980px; }
-.grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:22px; margin-top:24px; }
+.grid { display:grid; gap:22px; margin-top:24px; }
 article, section { background:#fff; border:1px solid #dbe4ef; border-radius:16px; padding:18px; box-shadow:0 14px 42px rgba(15,23,42,.055); }
-article div { display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; }
+.figure-row { display:grid; grid-template-columns:minmax(0, 1.45fr) minmax(280px, .55fr); gap:20px; align-items:start; }
+.figure-main > div { display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; }
 h2 { margin:0; font-size:17px; }
 p { color:#64748b; line-height:1.6; }
 a { color:#0f766e; font-size:12px; font-weight:800; text-decoration:none; margin-left:8px; }
 img { width:100%; display:block; border-radius:10px; background:white; }
+.explain { border-left:3px solid #0f766e; background:#f8fafc; border-radius:12px; padding:14px 14px 10px; display:grid; gap:12px; }
+.explain div { display:grid; gap:4px; }
+.explain b { color:#0f172a; font-size:12px; letter-spacing:.02em; }
+.explain span { color:#64748b; line-height:1.58; font-size:13px; }
 section { margin-top:22px; }
 table { width:100%; border-collapse:collapse; font-size:13px; }
 th,td { border-bottom:1px solid #e5ebf3; padding:10px; text-align:right; }
 th:first-child,td:first-child,th:nth-child(2),td:nth-child(2) { text-align:left; }
 th { color:#64748b; }
-@media(max-width:900px) { main { padding:16px; } .grid { grid-template-columns:1fr; } h1 { font-size:32px; } }
+@media(max-width:900px) { main { padding:16px; } .figure-row { grid-template-columns:1fr; } h1 { font-size:32px; } }
 </style>
 </head>
 <body>
@@ -31,13 +36,13 @@ th { color:#64748b; }
 <h1>Academic Figure Pack</h1>
 <p class="sub">使用 SkillHub academic-figures 生成的出版风格图集。所有图基于 full_benchmark_v1 真实 metrics；输出同时包含 SVG 和 300DPI PNG。</p>
 </header>
-<div class="grid"><article><div><h2>Mean SMAPE bar</h2><a href="assets/01_model_mean_smape_bar.svg">SVG</a><a href="assets/01_model_mean_smape_bar.png">PNG</a></div><p>带标准差的整体误差对比。</p><img src="assets/01_model_mean_smape_bar.svg" alt="Mean SMAPE bar"/></article>
-<article><div><h2>Scenario rank heatmap</h2><a href="assets/02_scenario_rank_heatmap.svg">SVG</a><a href="assets/02_scenario_rank_heatmap.png">PNG</a></div><p>不同 context/horizon 场景中的模型排名。</p><img src="assets/02_scenario_rank_heatmap.svg" alt="Scenario rank heatmap"/></article>
-<article><div><h2>Inference-rank scatter</h2><a href="assets/03_inference_rank_scatter.svg">SVG</a><a href="assets/03_inference_rank_scatter.png">PNG</a></div><p>推理成本与平均排名的关系。</p><img src="assets/03_inference_rank_scatter.svg" alt="Inference-rank scatter"/></article>
-<article><div><h2>Rank trajectory line</h2><a href="assets/04_rank_trajectory_line.svg">SVG</a><a href="assets/04_rank_trajectory_line.png">PNG</a></div><p>Top 模型排名随实验场景变化。</p><img src="assets/04_rank_trajectory_line.svg" alt="Rank trajectory line"/></article>
-<article><div><h2>Task rank boxplot</h2><a href="assets/05_task_rank_boxplot.svg">SVG</a><a href="assets/05_task_rank_boxplot.png">PNG</a></div><p>每个模型在 25 个 task 上的排名分布。</p><img src="assets/05_task_rank_boxplot.svg" alt="Task rank boxplot"/></article>
-<article><div><h2>Top model SMAPE violin</h2><a href="assets/06_top_model_smape_violin.svg">SVG</a><a href="assets/06_top_model_smape_violin.png">PNG</a></div><p>Top 6 模型 task-level SMAPE 分布。</p><img src="assets/06_top_model_smape_violin.svg" alt="Top model SMAPE violin"/></article>
-<article><div><h2>Average rank forest</h2><a href="assets/07_average_rank_forest.svg">SVG</a><a href="assets/07_average_rank_forest.png">PNG</a></div><p>平均排名及 bootstrap 95% CI。</p><img src="assets/07_average_rank_forest.svg" alt="Average rank forest"/></article></div>
+<div class="grid"><article class="figure-row"><div class="figure-main"><div><h2>Mean SMAPE bar</h2><a href="assets/01_model_mean_smape_bar.svg">SVG</a><a href="assets/01_model_mean_smape_bar.png">PNG</a></div><p>带标准差的整体误差对比。</p><img src="assets/01_model_mean_smape_bar.svg" alt="Mean SMAPE bar"/></div><aside class="explain"><div><b>看什么</b><span>比较每个模型跨全部 task 的平均 SMAPE，误差线表示 task 间波动。</span></div><div><b>当前结论</b><span>TabPFN-TS 的平均 SMAPE 最低 (1.439)。</span></div><div><b>注意口径</b><span>SMAPE 是直接跨 task 平均，数据集尺度差异仍可能影响整体均值。</span></div></aside></article>
+<article class="figure-row"><div class="figure-main"><div><h2>Scenario rank heatmap</h2><a href="assets/02_scenario_rank_heatmap.svg">SVG</a><a href="assets/02_scenario_rank_heatmap.png">PNG</a></div><p>不同 context/horizon 场景中的模型排名。</p><img src="assets/02_scenario_rank_heatmap.svg" alt="Scenario rank heatmap"/></div><aside class="explain"><div><b>看什么</b><span>看模型在不同 context/horizon 组合里是否稳定排在前列。</span></div><div><b>当前结论</b><span>TabPFN-TS 平均排名最低；热力图能看到长 context 场景下的名次变化。</span></div><div><b>注意口径</b><span>颜色表示排名，不表示 SMAPE 的绝对差距；相邻名次可能差距很小。</span></div></aside></article>
+<article class="figure-row"><div class="figure-main"><div><h2>Inference-rank scatter</h2><a href="assets/03_inference_rank_scatter.svg">SVG</a><a href="assets/03_inference_rank_scatter.png">PNG</a></div><p>推理成本与平均排名的关系。</p><img src="assets/03_inference_rank_scatter.svg" alt="Inference-rank scatter"/></div><aside class="explain"><div><b>看什么</b><span>横轴是平均推理时间，纵轴是平均排名；左上更快但更差，右下更慢但更强。</span></div><div><b>当前结论</b><span>TabPFN-TS 排名最好，但平均推理时间 1.635s，明显慢于树模型和简单 baseline。</span></div><div><b>注意口径</b><span>这里使用 log10 时间轴；推理时间来自当前 Python/TabPFN-TS pipeline 调用，包含模型 pipeline 开销，不等同于充分优化后的部署延迟。</span></div></aside></article>
+<article class="figure-row"><div class="figure-main"><div><h2>Rank trajectory line</h2><a href="assets/04_rank_trajectory_line.svg">SVG</a><a href="assets/04_rank_trajectory_line.png">PNG</a></div><p>Top 模型排名随实验场景变化。</p><img src="assets/04_rank_trajectory_line.svg" alt="Rank trajectory line"/></div><aside class="explain"><div><b>看什么</b><span>看模型排名是否随着 context/horizon 增大而上升或下降。</span></div><div><b>当前结论</b><span>TabPFN-TS 在部分短/中 context 场景领先，但长 context 下 baseline 有反超现象。</span></div><div><b>注意口径</b><span>折线只展示 Top 模型，完整排名请结合热力图和汇总表。</span></div></aside></article>
+<article class="figure-row"><div class="figure-main"><div><h2>Task rank boxplot</h2><a href="assets/05_task_rank_boxplot.svg">SVG</a><a href="assets/05_task_rank_boxplot.png">PNG</a></div><p>每个模型在 25 个 task 上的排名分布。</p><img src="assets/05_task_rank_boxplot.svg" alt="Task rank boxplot"/></div><aside class="explain"><div><b>看什么</b><span>箱体越靠低 rank 且越窄，表示模型越稳定。</span></div><div><b>当前结论</b><span>TabPFN-TS 的平均排名为 2.44，wins=7/25。</span></div><div><b>注意口径</b><span>箱线图看的是排名分布，不反映具体 SMAPE 差距大小。</span></div></aside></article>
+<article class="figure-row"><div class="figure-main"><div><h2>Top model SMAPE violin</h2><a href="assets/06_top_model_smape_violin.svg">SVG</a><a href="assets/06_top_model_smape_violin.png">PNG</a></div><p>Top 6 模型 task-level SMAPE 分布。</p><img src="assets/06_top_model_smape_violin.svg" alt="Top model SMAPE violin"/></div><aside class="explain"><div><b>看什么</b><span>看 Top 模型的误差分布形态，是否有长尾或不稳定 task。</span></div><div><b>当前结论</b><span>TabPFN-TS 整体均值最低，但分布宽度提示仍存在失败或退步场景。</span></div><div><b>注意口径</b><span>小提琴图基于 25 个 task，样本量有限，适合做诊断而非最终显著性结论。</span></div></aside></article>
+<article class="figure-row"><div class="figure-main"><div><h2>Average rank forest</h2><a href="assets/07_average_rank_forest.svg">SVG</a><a href="assets/07_average_rank_forest.png">PNG</a></div><p>平均排名及 bootstrap 95% CI。</p><img src="assets/07_average_rank_forest.svg" alt="Average rank forest"/></div><aside class="explain"><div><b>看什么</b><span>看平均排名及不确定性区间，区间越短说明结果越稳定。</span></div><div><b>当前结论</b><span>TabPFN-TS 的平均排名最低，但仍需看 CI 与其他强 baseline 是否明显分离。</span></div><div><b>注意口径</b><span>CI 来自 task-level bootstrap，不代表独立重复实验或多 seed 置信区间。</span></div></aside></article></div>
 <section>
 <h2>Model summary</h2>
 <table><thead><tr><th>Display</th><th>Raw model</th><th>Avg rank</th><th>Mean SMAPE</th><th>Wins</th><th>Top-3</th></tr></thead><tbody><tr><td>TabPFN-TS</td><td>tabpfn_ts</td><td>2.440</td><td>1.4389</td><td>7</td><td>19/25</td></tr>

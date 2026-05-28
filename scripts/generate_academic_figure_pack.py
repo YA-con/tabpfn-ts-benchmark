@@ -94,6 +94,16 @@ def _render_both(kind: str, data: Path, assets: Path, stem: str, **kwargs) -> st
     return svg.name
 
 
+def _explain_html(*, watch: str, finding: str, caveat: str) -> str:
+    return (
+        '<aside class="explain">'
+        f'<div><b>看什么</b><span>{watch}</span></div>'
+        f'<div><b>当前结论</b><span>{finding}</span></div>'
+        f'<div><b>注意口径</b><span>{caveat}</span></div>'
+        "</aside>"
+    )
+
+
 def build_pack(results_glob: str, out_dir: Path) -> Path:
     metrics = _load_metrics(results_glob)
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -186,7 +196,7 @@ def build_pack(results_glob: str, out_dir: Path) -> Path:
     scatter_json = _write_json(
         data_dir / "03_pareto_scatter.json",
         {
-            "x": (summary.loc[order, "inference_time_s"] + 1e-4).round(6).tolist(),
+            "x": np.log10(summary.loc[order, "inference_time_s"] + 1e-4).round(6).tolist(),
             "y": summary.loc[order, "avg_rank"].round(4).tolist(),
             "groups": labels,
         },
@@ -197,7 +207,7 @@ def build_pack(results_glob: str, out_dir: Path) -> Path:
         assets,
         "03_inference_rank_scatter",
         title="推理成本与平均排名 / Inference Cost vs Rank",
-        xlabel="Mean inference time (s)",
+        xlabel="log10(mean inference time + 1e-4)",
         ylabel="Average rank (lower is better)",
         width=8.8,
         height=6.0,
@@ -312,17 +322,102 @@ def build_pack(results_glob: str, out_dir: Path) -> Path:
     )
 
     figures = [
-        ("Mean SMAPE bar", fig_bar, "带标准差的整体误差对比。"),
-        ("Scenario rank heatmap", fig_heat, "不同 context/horizon 场景中的模型排名。"),
-        ("Inference-rank scatter", fig_scatter, "推理成本与平均排名的关系。"),
-        ("Rank trajectory line", fig_line, "Top 模型排名随实验场景变化。"),
-        ("Task rank boxplot", fig_box, "每个模型在 25 个 task 上的排名分布。"),
-        ("Top model SMAPE violin", fig_violin, "Top 6 模型 task-level SMAPE 分布。"),
-        ("Average rank forest", fig_forest, "平均排名及 bootstrap 95% CI。"),
+        {
+            "title": "Mean SMAPE bar",
+            "file": fig_bar,
+            "caption": "带标准差的整体误差对比。",
+            "explain": _explain_html(
+                watch="比较每个模型跨全部 task 的平均 SMAPE，误差线表示 task 间波动。",
+                finding=(
+                    f"{SHORT_NAMES.get(order[0], order[0])} 的平均 SMAPE 最低 "
+                    f"({summary.iloc[0].mean_smape:.3f})。"
+                ),
+                caveat="SMAPE 是直接跨 task 平均，数据集尺度差异仍可能影响整体均值。",
+            ),
+        },
+        {
+            "title": "Scenario rank heatmap",
+            "file": fig_heat,
+            "caption": "不同 context/horizon 场景中的模型排名。",
+            "explain": _explain_html(
+                watch="看模型在不同 context/horizon 组合里是否稳定排在前列。",
+                finding=(
+                    f"{SHORT_NAMES.get(order[0], order[0])} 平均排名最低；"
+                    f"热力图能看到长 context 场景下的名次变化。"
+                ),
+                caveat="颜色表示排名，不表示 SMAPE 的绝对差距；相邻名次可能差距很小。",
+            ),
+        },
+        {
+            "title": "Inference-rank scatter",
+            "file": fig_scatter,
+            "caption": "推理成本与平均排名的关系。",
+            "explain": _explain_html(
+                watch="横轴是平均推理时间，纵轴是平均排名；左上更快但更差，右下更慢但更强。",
+                finding=(
+                    f"{SHORT_NAMES.get(summary.index[0], summary.index[0])} 排名最好，但平均推理时间 "
+                    f"{summary.loc[summary.index[0], 'inference_time_s']:.3f}s，明显慢于树模型和简单 baseline。"
+                ),
+                caveat="这里使用 log10 时间轴；推理时间来自当前 Python/TabPFN-TS pipeline 调用，包含模型 pipeline 开销，不等同于充分优化后的部署延迟。",
+            ),
+        },
+        {
+            "title": "Rank trajectory line",
+            "file": fig_line,
+            "caption": "Top 模型排名随实验场景变化。",
+            "explain": _explain_html(
+                watch="看模型排名是否随着 context/horizon 增大而上升或下降。",
+                finding="TabPFN-TS 在部分短/中 context 场景领先，但长 context 下 baseline 有反超现象。",
+                caveat="折线只展示 Top 模型，完整排名请结合热力图和汇总表。",
+            ),
+        },
+        {
+            "title": "Task rank boxplot",
+            "file": fig_box,
+            "caption": "每个模型在 25 个 task 上的排名分布。",
+            "explain": _explain_html(
+                watch="箱体越靠低 rank 且越窄，表示模型越稳定。",
+                finding=(
+                    f"{SHORT_NAMES.get(order[0], order[0])} 的平均排名为 "
+                    f"{summary.iloc[0].avg_rank:.2f}，wins={int(summary.iloc[0].wins)}/25。"
+                ),
+                caveat="箱线图看的是排名分布，不反映具体 SMAPE 差距大小。",
+            ),
+        },
+        {
+            "title": "Top model SMAPE violin",
+            "file": fig_violin,
+            "caption": "Top 6 模型 task-level SMAPE 分布。",
+            "explain": _explain_html(
+                watch="看 Top 模型的误差分布形态，是否有长尾或不稳定 task。",
+                finding="TabPFN-TS 整体均值最低，但分布宽度提示仍存在失败或退步场景。",
+                caveat="小提琴图基于 25 个 task，样本量有限，适合做诊断而非最终显著性结论。",
+            ),
+        },
+        {
+            "title": "Average rank forest",
+            "file": fig_forest,
+            "caption": "平均排名及 bootstrap 95% CI。",
+            "explain": _explain_html(
+                watch="看平均排名及不确定性区间，区间越短说明结果越稳定。",
+                finding=(
+                    f"{SHORT_NAMES.get(order[0], order[0])} 的平均排名最低，"
+                    "但仍需看 CI 与其他强 baseline 是否明显分离。"
+                ),
+                caveat="CI 来自 task-level bootstrap，不代表独立重复实验或多 seed 置信区间。",
+            ),
+        },
     ]
     figure_html = "\n".join(
-        f'<article><div><h2>{title}</h2><a href="assets/{file}">SVG</a><a href="assets/{Path(file).with_suffix(".png").name}">PNG</a></div><p>{caption}</p><img src="assets/{file}" alt="{title}"/></article>'
-        for title, file, caption in figures
+        '<article class="figure-row">'
+        '<div class="figure-main">'
+        f'<div><h2>{item["title"]}</h2><a href="assets/{item["file"]}">SVG</a>'
+        f'<a href="assets/{Path(item["file"]).with_suffix(".png").name}">PNG</a></div>'
+        f'<p>{item["caption"]}</p><img src="assets/{item["file"]}" alt="{item["title"]}"/>'
+        "</div>"
+        f'{item["explain"]}'
+        "</article>"
+        for item in figures
     )
     table_rows = "\n".join(
         f"<tr><td>{SHORT_NAMES.get(model, model)}</td><td>{model}</td><td>{row.avg_rank:.3f}</td><td>{row.mean_smape:.4f}</td><td>{int(row.wins)}</td><td>{int(row.top3)}/25</td></tr>"
@@ -340,19 +435,24 @@ main {{ max-width:1440px; margin:0 auto; padding:34px; }}
 header {{ padding:28px 0 22px; border-bottom:1px solid #dbe4ef; }}
 h1 {{ margin:0 0 10px; font-size:44px; letter-spacing:0; }}
 .sub {{ color:#64748b; line-height:1.7; max-width:980px; }}
-.grid {{ display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:22px; margin-top:24px; }}
+.grid {{ display:grid; gap:22px; margin-top:24px; }}
 article, section {{ background:#fff; border:1px solid #dbe4ef; border-radius:16px; padding:18px; box-shadow:0 14px 42px rgba(15,23,42,.055); }}
-article div {{ display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; }}
+.figure-row {{ display:grid; grid-template-columns:minmax(0, 1.45fr) minmax(280px, .55fr); gap:20px; align-items:start; }}
+.figure-main > div {{ display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; }}
 h2 {{ margin:0; font-size:17px; }}
 p {{ color:#64748b; line-height:1.6; }}
 a {{ color:#0f766e; font-size:12px; font-weight:800; text-decoration:none; margin-left:8px; }}
 img {{ width:100%; display:block; border-radius:10px; background:white; }}
+.explain {{ border-left:3px solid #0f766e; background:#f8fafc; border-radius:12px; padding:14px 14px 10px; display:grid; gap:12px; }}
+.explain div {{ display:grid; gap:4px; }}
+.explain b {{ color:#0f172a; font-size:12px; letter-spacing:.02em; }}
+.explain span {{ color:#64748b; line-height:1.58; font-size:13px; }}
 section {{ margin-top:22px; }}
 table {{ width:100%; border-collapse:collapse; font-size:13px; }}
 th,td {{ border-bottom:1px solid #e5ebf3; padding:10px; text-align:right; }}
 th:first-child,td:first-child,th:nth-child(2),td:nth-child(2) {{ text-align:left; }}
 th {{ color:#64748b; }}
-@media(max-width:900px) {{ main {{ padding:16px; }} .grid {{ grid-template-columns:1fr; }} h1 {{ font-size:32px; }} }}
+@media(max-width:900px) {{ main {{ padding:16px; }} .figure-row {{ grid-template-columns:1fr; }} h1 {{ font-size:32px; }} }}
 </style>
 </head>
 <body>
