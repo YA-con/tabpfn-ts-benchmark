@@ -117,6 +117,7 @@ def _interactive_section(
     <button type="button" id="dyn-play">播放</button>
     <input id="dyn-step" type="range" min="1" value="1"/>
   </div>
+  <div class="dynamic-progress"><span id="dyn-progress"></span></div>
   <div class="dynamic-grid">
     <article class="dynamic-card dynamic-wide">
       <h3>预测轨迹播放</h3>
@@ -237,14 +238,26 @@ pre {{ margin: 12px 0 0; white-space: pre-wrap; font-size: 12px; line-height: 1.
 .dynamic-toolbar select, .dynamic-toolbar button, .dynamic-toolbar input {{ height: 34px; border: 1px solid #cbd5e1; border-radius: 6px; background: white; color: var(--ink); }}
 .dynamic-toolbar select {{ min-width: 150px; padding: 0 8px; }}
 .dynamic-toolbar button {{ padding: 0 16px; background: var(--ink); color: white; font-weight: 800; cursor: pointer; }}
+.dynamic-toolbar button.is-playing {{ background: var(--accent); box-shadow: 0 0 0 4px rgba(219,39,119,.14); }}
 .dynamic-toolbar input {{ min-width: 220px; accent-color: var(--accent); }}
+.dynamic-progress {{ height: 6px; border-radius: 999px; overflow: hidden; background: #e2e8f0; }}
+.dynamic-progress span {{ display: block; width: 0%; height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent2)); transition: width .42s ease; }}
 .dynamic-grid {{ display: grid; grid-template-columns: repeat(2, minmax(420px, 1fr)); gap: 16px; }}
-.dynamic-card {{ border: 1px solid #e2e8f0; border-radius: 8px; padding: 14px; background: #fbfdff; overflow-x: auto; }}
+.dynamic-card {{ border: 1px solid #e2e8f0; border-radius: 8px; padding: 14px; background: #fbfdff; overflow-x: auto; position: relative; }}
+.dynamic-card:hover {{ border-color: #bfdbfe; box-shadow: 0 10px 26px rgba(15, 23, 42, .08); }}
 .dynamic-wide {{ grid-column: 1 / -1; }}
 .dynamic-svg {{ width: 100%; min-width: 460px; height: auto; display: block; background: #ffffff; border-radius: 6px; }}
+.dynamic-svg .animated {{ animation: fadeSlide .38s ease both; transform-origin: center; }}
+.dynamic-svg .draw-line {{ stroke-dasharray: 1200; stroke-dashoffset: 1200; animation: drawLine .8s ease forwards; }}
+.dynamic-svg .hoverable {{ transition: opacity .18s ease, transform .18s ease; cursor: default; }}
+.dynamic-svg .hoverable:hover {{ opacity: 1; transform: scale(1.025); }}
+.tooltip {{ position: fixed; pointer-events: none; opacity: 0; transform: translate(10px, 10px); transition: opacity .12s ease; z-index: 50; background: rgba(15,23,42,.92); color: white; padding: 8px 10px; border-radius: 6px; font-size: 12px; max-width: 280px; box-shadow: 0 10px 28px rgba(15,23,42,.25); }}
+.tooltip.show {{ opacity: 1; }}
 .svg-axis {{ font-size: 12px; fill: #475569; }}
 .svg-title {{ font-size: 14px; font-weight: 800; fill: #0f172a; }}
 .svg-value {{ font-size: 12px; fill: #334155; }}
+@keyframes fadeSlide {{ from {{ opacity: 0; transform: translateY(7px); }} to {{ opacity: 1; transform: translateY(0); }} }}
+@keyframes drawLine {{ to {{ stroke-dashoffset: 0; }} }}
 @media (max-width: 980px) {{
   .hero, main {{ padding-left: 16px; padding-right: 16px; }}
   .overview, .metric-grid, .figure-grid, .dynamic-grid {{ grid-template-columns: 1fr; }}
@@ -352,6 +365,27 @@ if (filter) {{
     if (text !== null) node.textContent = text;
     return node;
   }}
+  function tooltip() {{
+    let tip = document.querySelector(".tooltip");
+    if (!tip) {{
+      tip = document.createElement("div");
+      tip.className = "tooltip";
+      document.body.appendChild(tip);
+    }}
+    return tip;
+  }}
+  function attachTooltip(node, text) {{
+    node.classList.add("hoverable");
+    node.addEventListener("mousemove", event => {{
+      const tip = tooltip();
+      tip.innerHTML = text;
+      tip.style.left = `${{event.clientX + 14}}px`;
+      tip.style.top = `${{event.clientY + 14}}px`;
+      tip.classList.add("show");
+    }});
+    node.addEventListener("mouseleave", () => tooltip().classList.remove("show"));
+    return node;
+  }}
   function extent(values, fallback = [0, 1]) {{
     const clean = values.map(Number).filter(Number.isFinite);
     if (!clean.length) return fallback;
@@ -392,6 +426,7 @@ if (filter) {{
   const seriesSelect = document.getElementById("dyn-series");
   const stepSlider = document.getElementById("dyn-step");
   const playButton = document.getElementById("dyn-play");
+  const progressBar = document.getElementById("dyn-progress");
   let timer = null;
 
   const metricOptions = payload.metricColumns || [];
@@ -426,6 +461,7 @@ if (filter) {{
     const maxStep = Math.max(1, ...steps);
     stepSlider.max = String(maxStep);
     stepSlider.value = String(Math.min(Number(stepSlider.value || 1), maxStep));
+    progressBar.style.width = `${{Math.round(Number(stepSlider.value) / maxStep * 100)}}%`;
   }}
 
   function drawRanking() {{
@@ -442,9 +478,10 @@ if (filter) {{
     grouped.forEach((item, idx) => {{
       const y = top + idx * rowH;
       const width = Math.max(3, scale(item.value, 0, maxValue, barW));
-      node.append(el("text", {{x: 18, y: y + 20, class: "svg-axis"}}, `${{idx + 1}}. ${{item.name}}`));
-      node.append(el("rect", {{x: left, y: y + 5, width, height: 21, rx: 4, fill: color(item.name), opacity: 0.86}}));
-      node.append(el("text", {{x: left + width + 8, y: y + 21, class: "svg-value"}}, item.value.toFixed(4)));
+      node.append(el("text", {{x: 18, y: y + 20, class: "svg-axis animated"}}, `${{idx + 1}}. ${{item.name}}`));
+      const bar = el("rect", {{x: left, y: y + 5, width, height: 21, rx: 4, fill: color(item.name), opacity: 0.86, class: "animated"}});
+      node.append(attachTooltip(bar, `<b>${{esc(item.name)}}</b><br>${{metric.toUpperCase()}}: ${{item.value.toFixed(6)}}<br>排名: #${{idx + 1}}`));
+      node.append(el("text", {{x: left + width + 8, y: y + 21, class: "svg-value animated"}}, item.value.toFixed(4)));
     }});
   }}
 
@@ -466,15 +503,15 @@ if (filter) {{
     node.append(el("line", {{x1: left, y1: h - bottom, x2: w - right, y2: h - bottom, stroke: "#94a3b8"}}));
     node.append(el("line", {{x1: left, y1: top, x2: left, y2: h - bottom, stroke: "#94a3b8"}}));
     const actualPoints = current.map((row, idx) => `${{xAt(idx).toFixed(1)}},${{yAt(row.y).toFixed(1)}}`).join(" ");
-    node.append(el("polyline", {{points: actualPoints, fill: "none", stroke: "#0f172a", "stroke-width": 3}}));
+    node.append(el("polyline", {{points: actualPoints, fill: "none", stroke: "#0f172a", "stroke-width": 3, class: "draw-line"}}));
     models.filter(m => rows.some(row => row.model === m)).forEach((m, mi) => {{
       const mr = rows.filter(row => row.model === m && row.step <= step).sort((a, b) => a.ds.localeCompare(b.ds));
       if (!mr.length) return;
       const pts = mr.map((row, idx) => `${{xAt(idx).toFixed(1)}},${{yAt(row.y_hat).toFixed(1)}}`).join(" ");
-      node.append(el("polyline", {{points: pts, fill: "none", stroke: color(m), "stroke-width": m === model ? 2.8 : 1.8, opacity: m === model ? 0.95 : 0.34}}));
+      node.append(el("polyline", {{points: pts, fill: "none", stroke: color(m), "stroke-width": m === model ? 2.8 : 1.8, opacity: m === model ? 0.95 : 0.34, class: "draw-line"}}));
       const lx = left + (mi % 4) * 230;
       const ly = h - 38 + Math.floor(mi / 4) * 16;
-      node.append(el("circle", {{cx: lx, cy: ly, r: 5, fill: color(m), opacity: m === model ? 1 : 0.55}}));
+      node.append(el("circle", {{cx: lx, cy: ly, r: 5, fill: color(m), opacity: m === model ? 1 : 0.55, class: "animated"}}));
       node.append(el("text", {{x: lx + 10, y: ly + 4, class: "svg-axis"}}, m));
     }});
     node.append(el("line", {{x1: left, y1: h - 18, x2: left + 30, y2: h - 18, stroke: "#0f172a", "stroke-width": 3}}));
@@ -505,7 +542,8 @@ if (filter) {{
       const x = left + idx * ((w - left - right) / bins);
       const bw = (w - left - right) / bins - 3;
       const bh = scale(count, 0, maxCount, h - top - bottom);
-      node.append(el("rect", {{x, y: h - bottom - bh, width: bw, height: bh, rx: 3, fill: color(model), opacity: 0.78}}));
+      const bar = el("rect", {{x, y: h - bottom - bh, width: bw, height: bh, rx: 3, fill: color(model), opacity: 0.78, class: "animated"}});
+      node.append(attachTooltip(bar, `<b>${{esc(model)}}</b><br>残差区间: ${{idx + 1}} / ${{bins}}<br>样本数: ${{count}}`));
     }});
     node.append(el("text", {{x: left, y: h - 20, class: "svg-axis"}}, lo.toFixed(3)));
     node.append(el("text", {{x: w - right - 46, y: h - 20, class: "svg-axis"}}, hi.toFixed(3)));
@@ -536,7 +574,8 @@ if (filter) {{
     grouped.forEach(row => {{
       const x = xAt(row.x);
       const y = yAt(row.y);
-      node.append(el("circle", {{cx: x, cy: y, r: 8, fill: color(row.model), opacity: 0.82}}));
+      const point = el("circle", {{cx: x, cy: y, r: 8, fill: color(row.model), opacity: 0.82, class: "animated"}});
+      node.append(attachTooltip(point, `<b>${{esc(row.model)}}</b><br>推理时间: ${{row.x.toFixed(4)}}s<br>${{metric.toUpperCase()}}: ${{row.y.toFixed(6)}}`));
       node.append(el("text", {{x: x + 10, y: y + 4, class: "svg-axis"}}, row.model));
     }});
     node.append(el("text", {{x: w / 2, y: h - 18, class: "svg-axis"}}, "平均推理时间（秒）"));
@@ -567,7 +606,8 @@ if (filter) {{
         if (rank > 0) coords.push(`${{xAt(idx).toFixed(1)}},${{yAt(rank).toFixed(1)}}`);
       }});
       if (coords.length < 2) return;
-      node.append(el("polyline", {{points: coords.join(" "), fill: "none", stroke: color(model), "stroke-width": model === modelSelect.value ? 3 : 1.8, opacity: model === modelSelect.value ? 0.95 : 0.42}}));
+      const line = el("polyline", {{points: coords.join(" "), fill: "none", stroke: color(model), "stroke-width": model === modelSelect.value ? 3 : 1.8, opacity: model === modelSelect.value ? 0.95 : 0.42, class: "draw-line"}});
+      node.append(attachTooltip(line, `<b>${{esc(model)}}</b><br>跨数据集排名轨迹`));
     }});
     node.append(el("text", {{x: 20, y: yAt(1) + 4, class: "svg-axis"}}, "#1"));
   }}
@@ -584,17 +624,23 @@ if (filter) {{
   modelSelect.addEventListener("change", () => {{ refreshSeries(); drawAll(); }});
   seriesSelect.addEventListener("change", drawForecast);
   stepSlider.addEventListener("input", drawForecast);
+  stepSlider.addEventListener("input", () => {{
+    progressBar.style.width = `${{Math.round(Number(stepSlider.value || 1) / Number(stepSlider.max || 1) * 100)}}%`;
+  }});
   playButton.addEventListener("click", () => {{
     if (timer) {{
       clearInterval(timer);
       timer = null;
       playButton.textContent = "播放";
+      playButton.classList.remove("is-playing");
       return;
     }}
     playButton.textContent = "暂停";
+    playButton.classList.add("is-playing");
     timer = setInterval(() => {{
       const next = Number(stepSlider.value || 1) + 1;
       stepSlider.value = next > Number(stepSlider.max || 1) ? 1 : next;
+      progressBar.style.width = `${{Math.round(Number(stepSlider.value || 1) / Number(stepSlider.max || 1) * 100)}}%`;
       drawForecast();
     }}, 650);
   }});
