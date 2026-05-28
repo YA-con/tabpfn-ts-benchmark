@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import math
+import json
 from html import escape
 from pathlib import Path
 
@@ -795,6 +796,306 @@ def _radial_error_bars(metrics: pd.DataFrame) -> str:
     return "".join(pieces)
 
 
+def _interactive_dashboard(metrics: pd.DataFrame, predictions: pd.DataFrame) -> str:
+    """Render a browser-side interactive dashboard fed by embedded benchmark data."""
+
+    pred_cols = ["dataset", "domain", "model", "unique_id", "ds", "y", "y_hat"]
+    metric_cols = [
+        "model",
+        "dataset",
+        "domain",
+        "smape",
+        "mae",
+        "rmse",
+        "wape",
+        "mase",
+        "inference_time_s",
+    ]
+    pred_records = predictions[pred_cols].copy()
+    pred_records["ds"] = pred_records["ds"].astype(str)
+    metric_records = metrics[[col for col in metric_cols if col in metrics.columns]].copy()
+    payload = {
+        "predictions": pred_records.to_dict(orient="records"),
+        "metrics": metric_records.to_dict(orient="records"),
+        "modelLabels": MODEL_LABELS,
+        "datasetLabels": DATASET_LABELS,
+        "domainLabels": DOMAIN_LABELS,
+        "colors": PALETTE,
+    }
+    payload_json = json.dumps(payload, ensure_ascii=False)
+    return f"""
+<div class="interactive-shell">
+  <div class="interactive-toolbar">
+    <label>数据集<select id="viz-dataset"></select></label>
+    <label>序列<select id="viz-series"></select></label>
+    <label>模型<select id="viz-model"></select></label>
+    <button type="button" id="viz-play">播放</button>
+    <input id="viz-step" type="range" min="1" value="1"/>
+  </div>
+  <div class="interactive-grid">
+    <div class="viz-card viz-wide">
+      <div class="viz-title">预测轨迹动态回放</div>
+      <div class="viz-sub">拖动或播放预测步长，观察不同模型如何逐步贴近真实走势</div>
+      <svg id="forecast-viz" viewBox="0 0 980 430" class="viz-svg"></svg>
+    </div>
+    <div class="viz-card">
+      <div class="viz-title">模型排名 Race Chart</div>
+      <div class="viz-sub">按数据集切换排名，条形越短代表 SMAPE 越低</div>
+      <svg id="race-viz" viewBox="0 0 620 430" class="viz-svg"></svg>
+    </div>
+    <div class="viz-card">
+      <div class="viz-title">残差热力图</div>
+      <div class="viz-sub">行是模型，列是预测步长，颜色越深表示平均绝对残差越大</div>
+      <svg id="heat-viz" viewBox="0 0 620 430" class="viz-svg"></svg>
+    </div>
+    <div class="viz-card">
+      <div class="viz-title">交互散点拟合图</div>
+      <div class="viz-sub">真实值与预测值的校准关系，含理想线和模型拟合线</div>
+      <svg id="fit-viz" viewBox="0 0 620 430" class="viz-svg"></svg>
+    </div>
+    <div class="viz-card">
+      <div class="viz-title">动态雷达对比</div>
+      <div class="viz-sub">当前数据集下的多指标相对得分，越外圈越好</div>
+      <svg id="radar-viz" viewBox="0 0 620 430" class="viz-svg"></svg>
+    </div>
+  </div>
+</div>
+<script id="benchmark-payload" type="application/json">{payload_json}</script>
+<script>
+(() => {{
+  const payload = JSON.parse(document.getElementById("benchmark-payload").textContent);
+  const preds = payload.predictions.map(d => ({{
+    ...d, y: Number(d.y), y_hat: Number(d.y_hat), ds: String(d.ds)
+  }}));
+  const metrics = payload.metrics.map(d => ({{
+    ...d, smape: Number(d.smape), mae: Number(d.mae), rmse: Number(d.rmse),
+    wape: Number(d.wape), mase: Number(d.mase || 0),
+    inference_time_s: Number(d.inference_time_s || 0)
+  }}));
+  const labelModel = v => payload.modelLabels[v] || v;
+  const labelDataset = v => payload.datasetLabels[v] || v;
+  const color = v => payload.colors[v] || "#334155";
+  const datasetSelect = document.getElementById("viz-dataset");
+  const seriesSelect = document.getElementById("viz-series");
+  const modelSelect = document.getElementById("viz-model");
+  const stepSlider = document.getElementById("viz-step");
+  const playBtn = document.getElementById("viz-play");
+  let timer = null;
+
+  const datasets = [...new Set(metrics.map(d => d.dataset))].sort();
+  const modelsByRank = [...new Set(metrics.slice().sort((a, b) => a.smape - b.smape).map(d => d.model))];
+  datasetSelect.innerHTML = datasets.map(d => `<option value="${{escapeAttr(d)}}">${{labelDataset(d)}}</option>`).join("");
+  modelSelect.innerHTML = modelsByRank.map(d => `<option value="${{escapeAttr(d)}}">${{labelModel(d)}}</option>`).join("");
+  if (modelsByRank.includes("tabpfn_ts")) modelSelect.value = "tabpfn_ts";
+
+  function escapeAttr(value) {{
+    return String(value).replaceAll("&", "&amp;").replaceAll('"', "&quot;").replaceAll("<", "&lt;");
+  }}
+  function svg(id) {{ return document.getElementById(id); }}
+  function clear(node) {{ while (node.firstChild) node.removeChild(node.firstChild); }}
+  function el(name, attrs = {{}}, text = null) {{
+    const node = document.createElementNS("http://www.w3.org/2000/svg", name);
+    Object.entries(attrs).forEach(([k, v]) => node.setAttribute(k, v));
+    if (text !== null) node.textContent = text;
+    return node;
+  }}
+  function extent(values) {{
+    const clean = values.filter(Number.isFinite);
+    let lo = Math.min(...clean), hi = Math.max(...clean);
+    if (!Number.isFinite(lo) || !Number.isFinite(hi)) return [0, 1];
+    if (lo === hi) {{ lo -= 1; hi += 1; }}
+    return [lo, hi];
+  }}
+  function scale(v, lo, hi, span) {{ return (v - lo) / (hi - lo || 1) * span; }}
+  function sampleRows(rows, maxN) {{
+    if (rows.length <= maxN) return rows;
+    const stride = Math.ceil(rows.length / maxN);
+    return rows.filter((_, i) => i % stride === 0).slice(0, maxN);
+  }}
+  function withSteps(rows) {{
+    const grouped = new Map();
+    rows.forEach(r => {{
+      const key = `${{r.dataset}}|${{r.model}}|${{r.unique_id}}`;
+      if (!grouped.has(key)) grouped.set(key, []);
+      grouped.get(key).push(r);
+    }});
+    grouped.forEach(items => items.sort((a, b) => a.ds.localeCompare(b.ds)).forEach((r, i) => r.step = i + 1));
+    return rows;
+  }}
+  withSteps(preds);
+
+  function refreshSeries() {{
+    const dataset = datasetSelect.value;
+    const model = modelSelect.value;
+    const series = [...new Set(preds.filter(d => d.dataset === dataset && d.model === model).map(d => d.unique_id))].sort();
+    seriesSelect.innerHTML = series.slice(0, 80).map(d => `<option value="${{escapeAttr(d)}}">${{d}}</option>`).join("");
+    const maxStep = Math.max(1, ...preds.filter(d => d.dataset === dataset && d.model === model).map(d => d.step || 1));
+    stepSlider.max = String(maxStep);
+    stepSlider.value = String(Math.min(Number(stepSlider.value || 1), maxStep));
+  }}
+
+  function drawForecast() {{
+    const node = svg("forecast-viz"); clear(node);
+    const dataset = datasetSelect.value;
+    const series = seriesSelect.value;
+    const step = Number(stepSlider.value || 1);
+    const rows = preds.filter(d => d.dataset === dataset && d.unique_id === series);
+    const actualRows = rows.filter(d => d.model === modelSelect.value).sort((a, b) => a.ds.localeCompare(b.ds));
+    const models = modelsByRank.filter(m => rows.some(d => d.model === m));
+    const w = 980, h = 430, left = 70, right = 24, top = 36, bottom = 76;
+    const values = rows.flatMap(d => [d.y, d.y_hat]);
+    const [lo, hi] = extent(values);
+    const xAt = i => left + scale(i, 0, Math.max(1, actualRows.length - 1), w - left - right);
+    const yAt = v => h - bottom - scale(v, lo, hi, h - top - bottom);
+    node.append(el("line", {{x1:left, y1:h-bottom, x2:w-right, y2:h-bottom, stroke:"#94a3b8"}}));
+    node.append(el("line", {{x1:left, y1:top, x2:left, y2:h-bottom, stroke:"#94a3b8"}}));
+    node.append(el("text", {{x:24, y:24, class:"axis"}}, `${{labelDataset(dataset)}} | ${{series}} | 当前步长 ${{step}}`));
+    if (actualRows.length) {{
+      const pts = actualRows.map((d, i) => `${{xAt(i).toFixed(1)}},${{yAt(d.y).toFixed(1)}}`).join(" ");
+      node.append(el("polyline", {{points:pts, fill:"none", stroke:"#0f172a", "stroke-width":3}}));
+    }}
+    models.forEach((model, mi) => {{
+      const mr = rows.filter(d => d.model === model && d.step <= step).sort((a, b) => a.ds.localeCompare(b.ds));
+      if (!mr.length) return;
+      const pts = mr.map((d, i) => `${{xAt(i).toFixed(1)}},${{yAt(d.y_hat).toFixed(1)}}`).join(" ");
+      node.append(el("polyline", {{points:pts, fill:"none", stroke:color(model), "stroke-width":2.2, opacity:model === modelSelect.value ? 0.96 : 0.42}}));
+      const lx = left + (mi % 3) * 250, ly = h - 42 + Math.floor(mi / 3) * 18;
+      node.append(el("circle", {{cx:lx, cy:ly, r:5, fill:color(model), opacity:model === modelSelect.value ? 1 : 0.55}}));
+      node.append(el("text", {{x:lx + 10, y:ly + 4, class:"axis"}}, labelModel(model)));
+    }});
+    node.append(el("line", {{x1:left, y1:h-24, x2:left+28, y2:h-24, stroke:"#0f172a", "stroke-width":3}}));
+    node.append(el("text", {{x:left+36, y:h-20, class:"axis"}}, "真实值"));
+  }}
+
+  function drawRace() {{
+    const node = svg("race-viz"); clear(node);
+    const dataset = datasetSelect.value;
+    const rows = metrics.filter(d => d.dataset === dataset).sort((a, b) => a.smape - b.smape);
+    const w = 620, left = 188, top = 44, rowH = 36, maxV = Math.max(...rows.map(d => d.smape), 1);
+    node.append(el("text", {{x:22, y:26, class:"axis"}}, `${{labelDataset(dataset)}} 排名`));
+    rows.forEach((d, i) => {{
+      const y = top + i * rowH;
+      const bw = scale(d.smape, 0, maxV, 360);
+      node.append(el("text", {{x:18, y:y+20, class:"axis"}}, `${{i + 1}}. ${{labelModel(d.model)}}`));
+      node.append(el("rect", {{x:left, y:y+4, width:Math.max(2, bw), height:22, rx:4, fill:color(d.model), opacity:0.86}}));
+      node.append(el("text", {{x:left + bw + 8, y:y+21, class:"value"}}, d.smape.toFixed(3)));
+    }});
+  }}
+
+  function drawHeat() {{
+    const node = svg("heat-viz"); clear(node);
+    const dataset = datasetSelect.value;
+    const rows = preds.filter(d => d.dataset === dataset);
+    const models = modelsByRank.filter(m => rows.some(d => d.model === m));
+    const maxStep = Math.max(1, ...rows.map(d => d.step || 1));
+    const cellW = Math.min(52, 352 / maxStep), cellH = 28, left = 190, top = 44;
+    const agg = new Map();
+    rows.forEach(d => {{
+      const key = `${{d.model}}|${{d.step}}`;
+      if (!agg.has(key)) agg.set(key, []);
+      agg.get(key).push(Math.abs(d.y - d.y_hat));
+    }});
+    const vals = [...agg.values()].map(v => v.reduce((a,b)=>a+b,0)/v.length);
+    const [lo, hi] = extent(vals);
+    node.append(el("text", {{x:22, y:26, class:"axis"}}, `${{labelDataset(dataset)}} 残差热力图`));
+    for (let s = 1; s <= maxStep; s++) {{
+      node.append(el("text", {{x:left + (s-0.5)*cellW, y:38, class:"axis center"}}, String(s)));
+    }}
+    models.forEach((model, r) => {{
+      const y = top + r * cellH;
+      node.append(el("text", {{x:18, y:y+19, class:"axis"}}, labelModel(model)));
+      for (let s = 1; s <= maxStep; s++) {{
+        const arr = agg.get(`${{model}}|${{s}}`) || [0];
+        const v = arr.reduce((a,b)=>a+b,0)/arr.length;
+        const t = scale(v, lo, hi, 1);
+        const fill = `rgb(${{248 - 210*t}},${{250 - 96*t}},${{252 - 38*t}})`;
+        node.append(el("rect", {{x:left+(s-1)*cellW, y, width:cellW-3, height:cellH-4, rx:4, fill}}));
+      }}
+    }});
+  }}
+
+  function drawFit() {{
+    const node = svg("fit-viz"); clear(node);
+    const dataset = datasetSelect.value, model = modelSelect.value;
+    const rows = sampleRows(preds.filter(d => d.dataset === dataset && d.model === model), 420);
+    const w = 620, h = 430, left = 64, right = 30, top = 42, bottom = 58;
+    const [lo, hi] = extent(rows.flatMap(d => [d.y, d.y_hat]));
+    const xAt = v => left + scale(v, lo, hi, w-left-right);
+    const yAt = v => h - bottom - scale(v, lo, hi, h-top-bottom);
+    node.append(el("text", {{x:20, y:26, class:"axis"}}, `${{labelDataset(dataset)}} | ${{labelModel(model)}}`));
+    node.append(el("line", {{x1:left, y1:h-bottom, x2:w-right, y2:h-bottom, stroke:"#94a3b8"}}));
+    node.append(el("line", {{x1:left, y1:top, x2:left, y2:h-bottom, stroke:"#94a3b8"}}));
+    node.append(el("line", {{x1:xAt(lo), y1:yAt(lo), x2:xAt(hi), y2:yAt(hi), stroke:"#64748b", "stroke-dasharray":"5 5"}}));
+    rows.forEach(d => node.append(el("circle", {{cx:xAt(d.y), cy:yAt(d.y_hat), r:3, fill:color(model), opacity:0.38}})));
+    if (rows.length > 2) {{
+      const mx = rows.reduce((a,d)=>a+d.y,0)/rows.length;
+      const my = rows.reduce((a,d)=>a+d.y_hat,0)/rows.length;
+      const cov = rows.reduce((a,d)=>a+(d.y-mx)*(d.y_hat-my),0);
+      const vv = rows.reduce((a,d)=>a+(d.y-mx)*(d.y-mx),0) || 1;
+      const slope = cov / vv, intercept = my - slope * mx;
+      node.append(el("line", {{x1:xAt(lo), y1:yAt(intercept+slope*lo), x2:xAt(hi), y2:yAt(intercept+slope*hi), stroke:color(model), "stroke-width":3}}));
+    }}
+    node.append(el("text", {{x:278, y:402, class:"axis center"}}, "真实值"));
+    node.append(el("text", {{x:20, y:40, class:"axis"}}, "预测值"));
+  }}
+
+  function drawRadar() {{
+    const node = svg("radar-viz"); clear(node);
+    const dataset = datasetSelect.value;
+    const rows = metrics.filter(d => d.dataset === dataset);
+    const dims = ["smape", "mae", "rmse", "wape", "mase"];
+    const cx = 260, cy = 224, rad = 140;
+    node.append(el("text", {{x:20, y:26, class:"axis"}}, `${{labelDataset(dataset)}} 多指标对比`));
+    [0.25,0.5,0.75,1].forEach(level => {{
+      const pts = dims.map((_, i) => {{
+        const a = -Math.PI/2 + 2*Math.PI*i/dims.length;
+        return `${{cx+rad*level*Math.cos(a)}},${{cy+rad*level*Math.sin(a)}}`;
+      }}).join(" ");
+      node.append(el("polygon", {{points:pts, fill:"none", stroke:"#e2e8f0"}}));
+    }});
+    dims.forEach((dim, i) => {{
+      const a = -Math.PI/2 + 2*Math.PI*i/dims.length;
+      node.append(el("line", {{x1:cx, y1:cy, x2:cx+rad*Math.cos(a), y2:cy+rad*Math.sin(a), stroke:"#e2e8f0"}}));
+      node.append(el("text", {{x:cx+(rad+26)*Math.cos(a), y:cy+(rad+26)*Math.sin(a), class:"axis center"}}, dim.toUpperCase()));
+    }});
+    rows.forEach((row, ri) => {{
+      const pts = dims.map((dim, i) => {{
+        const vals = rows.map(d => d[dim]).filter(Number.isFinite);
+        const [lo, hi] = extent(vals);
+        const score = 1 - scale(row[dim], lo, hi, 1);
+        const a = -Math.PI/2 + 2*Math.PI*i/dims.length;
+        return `${{cx+rad*score*Math.cos(a)}},${{cy+rad*score*Math.sin(a)}}`;
+      }}).join(" ");
+      node.append(el("polygon", {{points:pts, fill:color(row.model), opacity:row.model===modelSelect.value ? 0.18 : 0.05, stroke:color(row.model), "stroke-width":row.model===modelSelect.value ? 3 : 1.4}}));
+      const lx = 430, ly = 60 + ri * 20;
+      if (ly < 400) {{
+        node.append(el("circle", {{cx:lx, cy:ly, r:5, fill:color(row.model)}}));
+        node.append(el("text", {{x:lx+10, y:ly+4, class:"axis"}}, labelModel(row.model)));
+      }}
+    }});
+  }}
+
+  function drawAll() {{ drawForecast(); drawRace(); drawHeat(); drawFit(); drawRadar(); }}
+  datasetSelect.addEventListener("change", () => {{ refreshSeries(); drawAll(); }});
+  seriesSelect.addEventListener("change", drawForecast);
+  modelSelect.addEventListener("change", () => {{ refreshSeries(); drawAll(); }});
+  stepSlider.addEventListener("input", drawForecast);
+  playBtn.addEventListener("click", () => {{
+    if (timer) {{ clearInterval(timer); timer = null; playBtn.textContent = "播放"; return; }}
+    playBtn.textContent = "暂停";
+    timer = setInterval(() => {{
+      const next = Number(stepSlider.value) + 1;
+      stepSlider.value = next > Number(stepSlider.max) ? 1 : next;
+      drawForecast();
+    }}, 650);
+  }});
+  refreshSeries();
+  drawAll();
+}})();
+</script>
+"""
+
+
 def build_pilot_report(
     metrics: pd.DataFrame,
     predictions: pd.DataFrame,
@@ -871,6 +1172,21 @@ section {{ max-width: 1320px; margin: 0 auto; padding: 12px 36px 34px; }}
 .dataset-best {{ margin-top: 12px; font-weight: 700; }}
 .dataset-metric {{ color: #0f766e; margin-top: 4px; font-weight: 700; }}
 .dataset-spread {{ color: #64748b; margin-top: 4px; font-size: 12px; }}
+.interactive-shell {{ display: grid; gap: 16px; }}
+.interactive-toolbar {{ display: flex; flex-wrap: wrap; gap: 10px; align-items: end; padding: 12px;
+  background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; }}
+.interactive-toolbar label {{ display: grid; gap: 5px; color: #475569; font-size: 12px; font-weight: 700; }}
+.interactive-toolbar select, .interactive-toolbar button, .interactive-toolbar input {{ height: 34px;
+  border: 1px solid #cbd5e1; border-radius: 6px; background: white; color: #0f172a; }}
+.interactive-toolbar select {{ min-width: 160px; padding: 0 8px; }}
+.interactive-toolbar button {{ padding: 0 16px; background: #0f172a; color: white; font-weight: 700; cursor: pointer; }}
+.interactive-toolbar input {{ min-width: 220px; accent-color: #db2777; }}
+.interactive-grid {{ display: grid; grid-template-columns: repeat(2, minmax(420px, 1fr)); gap: 16px; }}
+.viz-card {{ border: 1px solid #dbe3ee; border-radius: 8px; padding: 14px; background: #ffffff; overflow-x: auto; }}
+.viz-wide {{ grid-column: 1 / -1; }}
+.viz-title {{ font-size: 16px; font-weight: 800; color: #0f172a; }}
+.viz-sub {{ margin: 4px 0 10px; color: #64748b; font-size: 12px; }}
+.viz-svg {{ width: 100%; min-width: 560px; height: auto; display: block; background: #fbfdff; border-radius: 6px; }}
 table {{ border-collapse: collapse; width: 100%; font-size: 13px; }}
 th, td {{ border-bottom: 1px solid #e2e8f0; padding: 9px 8px; text-align: right; }}
 th:first-child, td:first-child {{ text-align: left; }}
@@ -878,6 +1194,7 @@ th {{ color: #475569; }}
 @media (max-width: 900px) {{
   .hero, .grid, section {{ padding-left: 16px; padding-right: 16px; }}
   .grid, .advanced-grid {{ grid-template-columns: 1fr; }}
+  .interactive-grid {{ grid-template-columns: 1fr; }}
   .gallery {{ grid-template-columns: 1fr; }}
   .chart {{ min-width: 620px; }}
 }}
@@ -887,7 +1204,7 @@ th {{ color: #475569; }}
 <header>
 <div class="hero">
   <h1>TabPFN-TS 初步实验结果</h1>
-  <div class="subtitle">CPU-only 初步实验，覆盖跨领域合成 sanity 数据集与现有金融样本。当前页面是后续完整 benchmark 的结果展示模板。</div>
+  <div class="subtitle">基于真实 TabPFN-TS 权重的跨领域预测实验，覆盖能源、交通、天气、汇率、ETTh1 与现有金融数据。页面集成静态诊断图与动态交互对比图。</div>
 </div>
 </header>
 <div class="grid">
@@ -897,6 +1214,7 @@ th {{ color: #475569; }}
 </div>
 <section>
   <div class="panel"><h2>数据集概览</h2>{_dataset_cards(metrics)}</div>
+  <div class="panel"><h2>动态交互对比</h2>{_interactive_dashboard(metrics, predictions)}</div>
   <div class="panel">{_bar_chart(metrics, "smape")}</div>
   <div class="panel">{_rank_bump_chart(metrics)}</div>
   <div class="panel">{_heatmap(metrics, "smape")}</div>
