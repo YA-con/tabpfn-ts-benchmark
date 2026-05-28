@@ -90,6 +90,13 @@ def _load_frames(results_glob: str) -> tuple[pd.DataFrame, pd.DataFrame]:
     return pd.concat(metric_frames, ignore_index=True), pd.concat(prediction_frames, ignore_index=True)
 
 
+def _run_label_from_glob(results_glob: str) -> str:
+    marker = "results/"
+    if marker in results_glob:
+        return results_glob.split(marker, 1)[1].split("/")[0].replace("*", "matrix")
+    return Path(results_glob).parts[1] if len(Path(results_glob).parts) > 1 else "benchmark"
+
+
 def _build_payload(metrics: pd.DataFrame, predictions: pd.DataFrame) -> dict[str, Any]:
     metrics = metrics.copy()
     metrics["task"] = metrics["matrix_run"] + "|" + metrics["dataset"]
@@ -233,14 +240,14 @@ def _build_payload(metrics: pd.DataFrame, predictions: pd.DataFrame) -> dict[str
     )
 
 
-def _render_html(payload: dict[str, Any], output: Path) -> None:
+def _render_html(payload: dict[str, Any], output: Path, run_label: str) -> None:
     data_json = json.dumps(payload, ensure_ascii=False, allow_nan=False)
     html = f"""<!doctype html>
 <html lang="zh-CN">
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>Full Benchmark v1 · Animated Model Dashboard</title>
+<title>{run_label} · Animated Model Dashboard</title>
 <style>
 :root {{
   --bg: #f6f8fb;
@@ -291,7 +298,7 @@ svg {{ width: 100%; height: auto; display: block; background: #fbfcfe; border-ra
       <h1>动态图表版模型对比</h1>
       <p class="sub">这里把适合动的 7 类图都做出来：排名轨迹、成对差值、预测播放、热力图 reveal、Pareto 轨迹、残差分布切换、胜场累积。动画只服务于“变化过程”，不做无意义装饰。</p>
     </div>
-    <div class="note"><b>数据口径</b><br/>全部来自 full_benchmark_v1 的真实 metrics/predictions CSV。每个动画都可以暂停，避免为了动而牺牲读数。</div>
+    <div class="note"><b>数据口径</b><br/>全部来自 {run_label} 的真实 metrics/predictions CSV。每个动画都可以暂停，避免为了动而牺牲读数。</div>
   </section>
   <div class="controls">
     <button class="primary" id="play">播放</button>
@@ -577,7 +584,7 @@ def main() -> None:
     args = parse_args()
     metrics, predictions = _load_frames(args.results_glob)
     payload = _build_payload(metrics, predictions)
-    _render_html(payload, PROJECT_ROOT / args.out)
+    _render_html(payload, PROJECT_ROOT / args.out, _run_label_from_glob(args.results_glob))
     print(PROJECT_ROOT / args.out / "index.html")
 
 

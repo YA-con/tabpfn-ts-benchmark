@@ -1,0 +1,197 @@
+{
+  "report_type": "fancy_demo",
+  "theme": "dark_premium",
+  "run_id": "tabpfn_ts_20260528_155951",
+  "run_dir": "/Users/lioz/Desktop/组里/tabpfn_TS_26-5-26/tabpfn-quant/results/full_benchmark_v2_c384_h48_s3",
+  "primary_metric": "smape",
+  "is_demo": true,
+  "demo_note": "训练曲线仅在缺少真实日志时作为视觉占位，不参与实验结论。",
+  "warnings": [
+    "未发现真实 loss/accuracy 训练日志；训练曲线仅为视觉 demo 占位，不参与实验结论。"
+  ],
+  "summary": [
+    {
+      "model": "ridge_ar",
+      "horizon": 48.0,
+      "context_length": 384.0,
+      "mse": 0.10679847762655763,
+      "mae": 0.18521640867906455,
+      "rmse": 0.23460356378140973,
+      "smape": 0.6353490726275688,
+      "wape": 0.5776067913968312,
+      "mase": 0.32265870190962154,
+      "train_time_s": 0.027194921253249,
+      "inference_time_s": 0.027282465994358,
+      "gpu_memory_mb": 0.0
+    },
+    {
+      "model": "tabpfn_ts",
+      "horizon": 48.0,
+      "context_length": 384.0,
+      "mse": 0.2680143017134526,
+      "mae": 0.37301470550956584,
+      "rmse": 0.4595825208377824,
+      "smape": 2.175818709127082,
+      "wape": 2.0647977169262632,
+      "mase": 1.3279301332447222,
+      "train_time_s": 0.0,
+      "inference_time_s": 2.4293903431855144,
+      "gpu_memory_mb": 0.0
+    },
+    {
+      "model": "lightgbm_ar",
+      "horizon": 48.0,
+      "context_length": 384.0,
+      "mse": 1.0916812595397363,
+      "mae": 0.5608989005199548,
+      "rmse": 0.6998310077624768,
+      "smape": 2.7416283836280644,
+      "wape": 2.622449500067885,
+      "mase": 1.5761081459813917,
+      "train_time_s": 0.45230937921442094,
+      "inference_time_s": 0.07685635737143454,
+      "gpu_memory_mb": 0.0
+    },
+    {
+      "model": "hist_gradient_boosting_ar",
+      "horizon": 48.0,
+      "context_length": 384.0,
+      "mse": 4.870778438128067,
+      "mae": 0.8850368806730067,
+      "rmse": 1.2468892593875989,
+      "smape": 3.7259857665431766,
+      "wape": 3.6024949603796883,
+      "mase": 1.809849273470362,
+      "train_time_s": 0.5612494938075543,
+      "inference_time_s": 0.44755762205459176,
+      "gpu_memory_mb": 0.0
+    },
+    {
+      "model": "xgboost_ar",
+      "horizon": 48.0,
+      "context_length": 384.0,
+      "mse": 4.596805616032236,
+      "mae": 1.2760526049079153,
+      "rmse": 1.520929934479463,
+      "smape": 5.845148889744024,
+      "wape": 5.48688949599779,
+      "mase": 4.573183047780034,
+      "train_time_s": 0.22517958739772434,
+      "inference_time_s": 0.056490366440266324,
+      "gpu_memory_mb": 0.0
+    },
+    {
+      "model": "seasonal_naive",
+      "horizon": 48.0,
+      "context_length": 384.0,
+      "mse": 9.154328669450825,
+      "mae": 1.848974815504319,
+      "rmse": 1.9965635030923576,
+      "smape": 10.149274247173059,
+      "wape": 9.095805103114174,
+      "mase": 9.892783347225436,
+      "train_time_s": 0.00035677952691910003,
+      "inference_time_s": 0.00375470574945206,
+      "gpu_memory_mb": 0.0
+    },
+    {
+      "model": "linear_trend",
+      "horizon": 48.0,
+      "context_length": 384.0,
+      "mse": 20.248647848276917,
+      "mae": 3.0461976900339622,
+      "rmse": 3.5474713850694606,
+      "smape": 11.938365550655424,
+      "wape": 11.39573917333002,
+      "mase": 8.250326389417927,
+      "train_time_s": 0.00033796182833608,
+      "inference_time_s": 0.00419179801829154,
+      "gpu_memory_mb": 0.0
+    },
+    {
+      "model": "moving_average",
+      "horizon": 48.0,
+      "context_length": 384.0,
+      "mse": 19.748566074100033,
+      "mae": 3.0586199472105267,
+      "rmse": 3.3593314870040833,
+      "smape": 15.446144639119325,
+      "wape": 14.040930733176882,
+      "mase": 12.627654508538459,
+      "train_time_s": 0.00035031018778676,
+      "inference_time_s": 0.0038181917741894203,
+      "gpu_memory_mb": 0.0
+    },
+    {
+      "model": "dummy_mean",
+      "horizon": 48.0,
+      "context_length": 384.0,
+      "mse": 14.75728515316714,
+      "mae": 3.0228615279399533,
+      "rmse": 3.452361839310414,
+      "smape": 21.64836616073523,
+      "wape": 18.958509473409656,
+      "mase": 15.875566963551924,
+      "train_time_s": 0.0005156739614903601,
+      "inference_time_s": 0.0037743674125522,
+      "gpu_memory_mb": 0.0
+    }
+  ],
+  "baseline_comparison": [
+    {
+      "baseline": "pilot_baseline",
+      "metric": "smape",
+      "current_model": "ridge_ar",
+      "current_value": 0.6353490726275688,
+      "baseline_model": "ridge_ar",
+      "baseline_value": 5.544826114617382,
+      "absolute_difference": 4.909477041989813,
+      "relative_improvement_pct": 88.54158706703808
+    },
+    {
+      "baseline": "pilot_baseline",
+      "metric": "smape",
+      "current_model": "ridge_ar",
+      "current_value": 0.6353490726275688,
+      "baseline_model": "ridge_ar",
+      "baseline_value": 5.544826114617382,
+      "absolute_difference": 4.909477041989813,
+      "relative_improvement_pct": 88.54158706703808
+    }
+  ],
+  "figures": [
+    {
+      "title": "Baseline 相对变化",
+      "file": "premium_baseline_delta.svg"
+    },
+    {
+      "title": "指标排名棒棒糖图",
+      "file": "premium_metric_lollipop_smape.svg"
+    },
+    {
+      "title": "数据集-模型热力图",
+      "file": "premium_heatmap_smape.svg"
+    },
+    {
+      "title": "多指标雷达图",
+      "file": "premium_radar.svg"
+    },
+    {
+      "title": "效率-性能散点图",
+      "file": "premium_efficiency_frontier.svg"
+    },
+    {
+      "title": "Baseline 到 Current 斜率图",
+      "file": "premium_slope_chart.svg"
+    },
+    {
+      "title": "残差分布图",
+      "file": "premium_residual_distribution.svg"
+    },
+    {
+      "title": "训练曲线（Demo 占位）",
+      "file": "premium_training_curve_demo.svg",
+      "demo": "true"
+    }
+  ]
+}

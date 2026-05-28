@@ -1,0 +1,180 @@
+{
+  "run_id": "tabpfn_ts_20260528_155253",
+  "run_dir": "/home/wanyi/zy_test/tabpfn-ts-benchmark/results/full_benchmark_v2_c192_h24_s3",
+  "primary_metric": "smape",
+  "warnings": [],
+  "summary": [
+    {
+      "model": "ridge_ar",
+      "horizon": 24.0,
+      "context_length": 192.0,
+      "mse": 0.027784534745725648,
+      "mae": 0.1071013439713577,
+      "rmse": 0.1303946123484958,
+      "smape": 0.385295386747746,
+      "wape": 0.3449363785703669,
+      "mase": 0.3012661994285307,
+      "train_time_s": 0.01431850320659574,
+      "inference_time_s": 0.01363691594451662,
+      "gpu_memory_mb": 0.0
+    },
+    {
+      "model": "lightgbm_ar",
+      "horizon": 24.0,
+      "context_length": 192.0,
+      "mse": 0.8397109115478794,
+      "mae": 0.47013781891628403,
+      "rmse": 0.5624024585170878,
+      "smape": 1.6972133566352707,
+      "wape": 1.7231087393552147,
+      "mase": 0.7280276975398798,
+      "train_time_s": 0.36888533481396735,
+      "inference_time_s": 0.03741396176628766,
+      "gpu_memory_mb": 0.0
+    },
+    {
+      "model": "hist_gradient_boosting_ar",
+      "horizon": 24.0,
+      "context_length": 192.0,
+      "mse": 1.0812078729160886,
+      "mae": 0.5165568063547831,
+      "rmse": 0.6064356271003994,
+      "smape": 1.9797795606942699,
+      "wape": 1.958323868566918,
+      "mase": 0.8646356367948844,
+      "train_time_s": 0.34167459397576744,
+      "inference_time_s": 0.21898636482656003,
+      "gpu_memory_mb": 0.0
+    },
+    {
+      "model": "tabpfn_ts",
+      "horizon": 24.0,
+      "context_length": 192.0,
+      "mse": 0.473349938703241,
+      "mae": 0.45944288048199927,
+      "rmse": 0.5228229217603031,
+      "smape": 2.159273639351408,
+      "wape": 2.120377566460823,
+      "mase": 2.541924455600633,
+      "train_time_s": 0.0,
+      "inference_time_s": 2.1592019736301156,
+      "gpu_memory_mb": 0.0
+    },
+    {
+      "model": "xgboost_ar",
+      "horizon": 24.0,
+      "context_length": 192.0,
+      "mse": 3.159260528602033,
+      "mae": 0.8671415370462852,
+      "rmse": 1.0743844193317742,
+      "smape": 3.1101114940131946,
+      "wape": 3.11515683703411,
+      "mase": 1.8892671810322619,
+      "train_time_s": 0.2136319673620164,
+      "inference_time_s": 0.034063626034185224,
+      "gpu_memory_mb": 0.0
+    },
+    {
+      "model": "seasonal_naive",
+      "horizon": 24.0,
+      "context_length": 192.0,
+      "mse": 1.9726016011974252,
+      "mae": 0.9068141271780723,
+      "rmse": 0.9967520259604958,
+      "smape": 4.745879096150627,
+      "wape": 4.429377540734247,
+      "mase": 5.550383713616302,
+      "train_time_s": 0.00030476739630098,
+      "inference_time_s": 0.0032174810301512204,
+      "gpu_memory_mb": 0.0
+    },
+    {
+      "model": "moving_average",
+      "horizon": 24.0,
+      "context_length": 192.0,
+      "mse": 9.56612660064091,
+      "mae": 2.0674148761819606,
+      "rmse": 2.26210439087565,
+      "smape": 8.86168089573521,
+      "wape": 8.621282485124652,
+      "mase": 6.713582423029392,
+      "train_time_s": 0.00028927982784802,
+      "inference_time_s": 0.00325976633466774,
+      "gpu_memory_mb": 0.0
+    },
+    {
+      "model": "linear_trend",
+      "horizon": 24.0,
+      "context_length": 192.0,
+      "mse": 18.007307190947216,
+      "mae": 2.797043962231997,
+      "rmse": 3.0676369364852354,
+      "smape": 12.113027957539392,
+      "wape": 11.170791288967148,
+      "mase": 11.345351096217714,
+      "train_time_s": 0.0002949776127934,
+      "inference_time_s": 0.0035960059147327394,
+      "gpu_memory_mb": 0.0
+    },
+    {
+      "model": "dummy_mean",
+      "horizon": 24.0,
+      "context_length": 192.0,
+      "mse": 14.962137336223378,
+      "mae": 2.8946004163173678,
+      "rmse": 3.1837445618249953,
+      "smape": 16.179704894673772,
+      "wape": 14.925718344752065,
+      "mase": 14.05843384938932,
+      "train_time_s": 0.00045559881255026,
+      "inference_time_s": 0.0032504789996891602,
+      "gpu_memory_mb": 0.0
+    }
+  ],
+  "baseline_comparison": [
+    {
+      "baseline": "pilot_baseline",
+      "metric": "smape",
+      "current_model": "ridge_ar",
+      "current_value": 0.385295386747746,
+      "baseline_model": "ridge_ar",
+      "baseline_value": 5.544826114617382,
+      "absolute_difference": 5.159530727869636,
+      "relative_improvement_pct": 93.05126294705576
+    }
+  ],
+  "figures": [
+    {
+      "title": "Baseline 改变量图",
+      "file": "baseline_improvement.svg"
+    },
+    {
+      "title": "Baseline/模型平均指标柱状图",
+      "file": "metric_bar_smape.svg"
+    },
+    {
+      "title": "数据集-模型热力图",
+      "file": "dataset_heatmap_smape.svg"
+    },
+    {
+      "title": "多指标雷达图",
+      "file": "model_radar.svg"
+    },
+    {
+      "title": "运行时间图",
+      "file": "runtime.svg"
+    },
+    {
+      "title": "真实值-预测值散点图",
+      "file": "actual_vs_predicted.svg"
+    },
+    {
+      "title": "残差箱线图",
+      "file": "residual_boxplot.svg"
+    }
+  ],
+  "conclusions": [
+    "主指标 SMAPE 下，当前 run 的最佳模型是 ridge_ar，平均值为 0.3853。",
+    "相对 baseline pilot_baseline，当前最佳模型在 SMAPE 上提升 93.05% （absolute=+5.16）。"
+  ]
+}

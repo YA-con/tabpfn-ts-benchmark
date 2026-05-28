@@ -1,0 +1,2134 @@
+<!doctype html>
+<html lang="zh-CN" data-theme="dark_premium">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Fancy ML Dashboard | tabpfn_ts_20260528_155349</title>
+<style>
+:root {
+  --primary: #7dd3fc;
+  --accent: #f472b6;
+  --success: #34d399;
+  --warning: #fbbf24;
+  --danger: #fb7185;
+  --bg: #070b16;
+  --hero-bg: radial-gradient(circle at 12% 18%, rgba(125,211,252,.24), transparent 28%), radial-gradient(circle at 80% 8%, rgba(244,114,182,.18), transparent 30%), linear-gradient(135deg, #070b16 0%, #0f172a 52%, #111827 100%);
+  --card: rgba(15, 23, 42, .78);
+  --card-alt: rgba(30, 41, 59, .64);
+  --text: #e5edf8;
+  --muted: #94a3b8;
+  --border: rgba(148, 163, 184, .22);
+  --chart-bg: #0b1220;
+  --shadow: 0 24px 90px rgba(0, 0, 0, .35);
+  --radius: 18px;
+  --gap: 18px;
+  --palette: "#7dd3fc", "#f472b6", "#34d399", "#fbbf24", "#a78bfa", "#fb7185", "#2dd4bf", "#c084fc";
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0;
+  font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", sans-serif;
+  background:
+    radial-gradient(circle at 10% 0%, color-mix(in srgb, var(--primary) 18%, transparent), transparent 34%),
+    radial-gradient(circle at 92% 14%, color-mix(in srgb, var(--accent) 14%, transparent), transparent 32%),
+    var(--bg);
+  color: var(--text);
+}
+a { color: var(--primary); text-decoration: none; }
+.shell { display: grid; grid-template-columns: 236px minmax(0, 1fr); gap: 0; min-height: 100vh; }
+.sidebar {
+  position: sticky; top: 0; height: 100vh; padding: 24px 18px;
+  border-right: 1px solid var(--border); background: color-mix(in srgb, var(--card) 84%, transparent);
+  backdrop-filter: blur(22px);
+}
+.brand { display: grid; gap: 6px; margin-bottom: 26px; }
+.brand b { font-size: 15px; letter-spacing: .02em; }
+.brand span { color: var(--muted); font-size: 12px; }
+.nav { display: grid; gap: 8px; }
+.nav a { padding: 10px 12px; border-radius: 999px; color: var(--muted); font-weight: 800; font-size: 13px; }
+.nav a.active, .nav a:hover { background: color-mix(in srgb, var(--primary) 14%, transparent); color: var(--text); }
+.content { padding: 24px clamp(18px, 3vw, 44px) 54px; min-width: 0; }
+.hero {
+  position: relative; overflow: hidden; border: 1px solid var(--border); border-radius: calc(var(--radius) + 10px);
+  padding: 34px; min-height: 340px; background: var(--hero-bg); box-shadow: var(--shadow);
+}
+.hero:after {
+  content: ""; position: absolute; inset: 0; pointer-events: none;
+  background: linear-gradient(120deg, rgba(255,255,255,.18), transparent 18%, transparent 70%, rgba(255,255,255,.06));
+  opacity: .35;
+}
+.hero-inner { position: relative; z-index: 1; display: grid; grid-template-columns: 1.3fr .7fr; gap: 28px; align-items: end; }
+.eyebrow { display: inline-flex; width: fit-content; gap: 8px; align-items: center; padding: 8px 12px; border: 1px solid var(--border); border-radius: 999px; background: color-mix(in srgb, var(--card) 72%, transparent); color: var(--muted); font-size: 12px; font-weight: 900; }
+h1 { margin: 18px 0 10px; font-size: clamp(34px, 5vw, 64px); line-height: 1.02; letter-spacing: 0; }
+.hero-copy { color: var(--muted); line-height: 1.7; max-width: 820px; font-size: 15px; }
+.hero-metric { display: grid; gap: 12px; justify-items: start; padding: 22px; border: 1px solid var(--border); border-radius: var(--radius); background: color-mix(in srgb, var(--card) 76%, transparent); backdrop-filter: blur(20px); }
+.hero-metric span { color: var(--muted); font-size: 12px; font-weight: 900; text-transform: uppercase; }
+.hero-metric strong { font-size: clamp(42px, 6vw, 78px); line-height: .9; color: var(--primary); }
+.hero-meta { display: grid; grid-template-columns: repeat(4, minmax(120px, 1fr)); gap: 12px; margin-top: 24px; position: relative; z-index: 1; }
+.meta-card, .kpi-card, .insight-card, .chart-card, .panel {
+  border: 1px solid var(--border); border-radius: var(--radius); background: var(--card);
+  box-shadow: 0 16px 38px color-mix(in srgb, #000 14%, transparent); backdrop-filter: blur(18px);
+}
+.meta-card { padding: 14px; }
+.meta-card span, .kpi-top span, .insight-card span { color: var(--muted); font-size: 11px; font-weight: 900; text-transform: uppercase; }
+.meta-card b { display: block; margin-top: 7px; font-size: 18px; overflow-wrap: anywhere; }
+.pill { display: inline-flex; align-items: center; width: fit-content; border-radius: 999px; padding: 5px 9px; font-size: 12px; font-weight: 900; }
+.pill.good { color: var(--success); background: color-mix(in srgb, var(--success) 14%, transparent); }
+.pill.bad { color: var(--danger); background: color-mix(in srgb, var(--danger) 14%, transparent); }
+.pill.neutral { color: var(--muted); background: color-mix(in srgb, var(--muted) 12%, transparent); }
+.section { margin-top: 24px; }
+.section-head { display: flex; justify-content: space-between; gap: 16px; align-items: end; margin-bottom: 14px; }
+.section-head h2 { margin: 0; font-size: 24px; letter-spacing: 0; }
+.section-head p { margin: 6px 0 0; color: var(--muted); line-height: 1.6; }
+.kpi-grid { display: grid; grid-template-columns: repeat(4, minmax(190px, 1fr)); gap: var(--gap); }
+.kpi-card { padding: 18px; transition: transform .22s ease, border-color .22s ease, box-shadow .22s ease; }
+.kpi-card:hover, .chart-card:hover, .insight-card:hover { transform: translateY(-3px); border-color: color-mix(in srgb, var(--primary) 55%, var(--border)); box-shadow: var(--shadow); }
+.kpi-card.primary { background: linear-gradient(145deg, color-mix(in srgb, var(--primary) 16%, var(--card)), var(--card)); }
+.kpi-top { display: flex; justify-content: space-between; gap: 10px; align-items: center; }
+.kpi-top b { color: var(--muted); font-size: 11px; max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.kpi-value { margin: 14px 0; font-size: 34px; font-weight: 950; color: var(--text); }
+.kpi-grid { font-size: 12px; color: var(--muted); }
+.kpi-card .kpi-grid { display: grid; grid-template-columns: 1fr auto; gap: 8px 12px; }
+.kpi-card .kpi-grid strong { color: var(--text); }
+.insight-grid { display: grid; grid-template-columns: repeat(4, minmax(220px, 1fr)); gap: var(--gap); }
+.insight-card { padding: 18px; border-left: 4px solid var(--primary); transition: transform .22s ease, border-color .22s ease; }
+.insight-card.good { border-left-color: var(--success); }
+.insight-card.bad { border-left-color: var(--danger); }
+.insight-card.warn { border-left-color: var(--warning); }
+.insight-card h3 { margin: 10px 0 8px; font-size: 16px; }
+.insight-card p { margin: 0; color: var(--muted); line-height: 1.62; font-size: 13px; }
+.tabs { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
+.tab-btn { border: 1px solid var(--border); background: var(--card-alt); color: var(--muted); border-radius: 999px; padding: 10px 14px; font-weight: 900; cursor: pointer; }
+.tab-btn.active { color: var(--text); background: color-mix(in srgb, var(--primary) 17%, var(--card)); border-color: color-mix(in srgb, var(--primary) 55%, var(--border)); }
+.tab-pane { display: none; }
+.tab-pane.active { display: block; animation: rise .28s ease both; }
+.chart-grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: var(--gap); }
+.chart-card { padding: 16px; overflow: hidden; transition: transform .22s ease, border-color .22s ease, box-shadow .22s ease; }
+.span-4 { grid-column: span 4; }
+.span-6 { grid-column: span 6; }
+.span-8 { grid-column: span 8; }
+.chart-head { display: flex; justify-content: space-between; gap: 12px; align-items: center; margin-bottom: 12px; }
+.chart-head h3 { margin: 0; font-size: 15px; }
+.chart-head a, .demo-badge { color: var(--muted); font-size: 11px; font-weight: 900; border: 1px solid var(--border); border-radius: 999px; padding: 5px 8px; }
+.demo-badge { color: var(--warning); border-color: color-mix(in srgb, var(--warning) 45%, var(--border)); }
+.chart-card img { display: block; width: 100%; height: auto; border-radius: calc(var(--radius) - 7px); background: var(--chart-bg); }
+.panel { padding: 18px; overflow: hidden; }
+.toolbar { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 12px; }
+.toolbar input, .toolbar select { border: 1px solid var(--border); background: var(--card-alt); color: var(--text); border-radius: 12px; padding: 10px 12px; min-width: 220px; }
+.data-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.data-table th, .data-table td { border-bottom: 1px solid var(--border); padding: 10px 9px; text-align: right; white-space: nowrap; }
+.data-table th:first-child, .data-table td:first-child { text-align: left; }
+.data-table th { position: sticky; top: 0; z-index: 1; color: var(--muted); background: var(--card-alt); cursor: pointer; text-transform: uppercase; font-size: 11px; }
+.table-wrap { max-height: 480px; overflow: auto; border: 1px solid var(--border); border-radius: var(--radius); }
+details { border: 1px solid var(--border); border-radius: var(--radius); background: var(--card); padding: 16px; }
+summary { cursor: pointer; font-weight: 950; }
+pre { white-space: pre-wrap; color: var(--muted); line-height: 1.55; font-size: 12px; }
+.warning-panel { border: 1px solid color-mix(in srgb, var(--warning) 42%, var(--border)); background: color-mix(in srgb, var(--warning) 9%, var(--card)); color: var(--text); border-radius: var(--radius); padding: 16px 18px; }
+.warning-panel li { margin: 6px 0; color: var(--muted); }
+.empty-state { padding: 16px; border: 1px dashed var(--border); border-radius: var(--radius); color: var(--muted); background: var(--card-alt); }
+.mini-svg { width: 100%; height: 280px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--chart-bg); }
+.svg-axis { fill: var(--muted); font-size: 12px; }
+.svg-title { fill: var(--text); font-size: 15px; font-weight: 900; }
+.svg-label { fill: var(--text); font-size: 12px; font-weight: 800; }
+.tooltip { position: fixed; pointer-events: none; opacity: 0; z-index: 20; background: color-mix(in srgb, var(--card) 94%, #000); color: var(--text); border: 1px solid var(--border); border-radius: 12px; padding: 9px 10px; font-size: 12px; box-shadow: var(--shadow); transition: opacity .14s ease; }
+.tooltip.show { opacity: 1; }
+@keyframes rise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+@media print {
+  .sidebar, .tabs, .toolbar { display: none; }
+  .shell { display: block; }
+  body { background: white; color: #0f172a; }
+  .chart-card, .panel, .kpi-card, .insight-card { break-inside: avoid; box-shadow: none; }
+}
+@media (max-width: 1180px) {
+  .shell { grid-template-columns: 1fr; }
+  .sidebar { position: relative; height: auto; }
+  .nav { grid-template-columns: repeat(3, 1fr); }
+  .hero-inner, .hero-meta, .kpi-grid, .insight-grid { grid-template-columns: 1fr 1fr; }
+  .span-4, .span-6, .span-8 { grid-column: span 12; }
+}
+@media (max-width: 720px) {
+  .content { padding: 14px; }
+  .hero { padding: 22px; }
+  .hero-inner, .hero-meta, .kpi-grid, .insight-grid { grid-template-columns: 1fr; }
+  .nav { grid-template-columns: 1fr 1fr; }
+  h1 { font-size: 34px; }
+}
+</style>
+</head>
+<body>
+<div class="shell">
+  <aside class="sidebar">
+    <div class="brand"><b>TabPFN-TS Dashboard</b><span>Demo 可视化版本 · dark_premium</span></div>
+    <nav class="nav">
+      <a href="#overview" class="active">Overview</a>
+      <a href="#kpi">KPI</a>
+      <a href="#insights">Insights</a>
+      <a href="#charts">Charts</a>
+      <a href="#tables">Tables</a>
+      <a href="#config">Config</a>
+    </nav>
+  </aside>
+  <main class="content">
+    <section class="hero" id="overview">
+      <div class="hero-inner">
+        <div>
+          <div class="eyebrow">AI Research Dashboard · 2026-05-28 21:02:09</div>
+          <h1>tabpfn_ts_20260528_155349</h1>
+          <p class="hero-copy">基于真实实验产物自动生成的高级可视化 dashboard。训练曲线缺失时会明确标注 demo 占位，不会把占位曲线混入真实实验结论。</p>
+          <span class="pill good">Baseline: pilot_baseline · +88.60%</span>
+        </div>
+        <div class="hero-metric">
+          <span>Primary Metric · SMAPE</span>
+          <strong data-count="0.632179">0.6322</strong>
+          <span>Best current model: lightgbm_ar</span>
+        </div>
+      </div>
+      <div class="hero-meta">
+        <div class="meta-card"><span>Run ID</span><b>tabpfn_ts_20260528_155349</b></div>
+        <div class="meta-card"><span>Datasets / Models</span><b>5 / 9</b></div>
+        <div class="meta-card"><span>Rows</span><b>45 metrics · 1512 preds</b></div>
+        <div class="meta-card"><span>Runtime</span><b>20.168s</b></div>
+      </div>
+    </section>
+
+    <section class="section" id="kpi">
+      <div class="section-head"><div><h2>KPI 指标卡片</h2><p>当前 run 与 baseline 的核心指标对比，缺失项保持 N/A。</p></div></div>
+      <div class="kpi-grid">
+<article class="kpi-card primary">
+  <div class="kpi-top"><span>SMAPE</span><b>lightgbm_ar</b></div>
+  <div class="kpi-value" data-count="0.632179">0.6322</div>
+  <div class="kpi-grid">
+    <span>Baseline</span><strong>5.545</strong>
+    <span>Absolute</span><strong>4.913</strong>
+    <span>Relative</span><strong class="pill good">↑ 88.6%</strong>
+  </div>
+</article>
+<article class="kpi-card standard">
+  <div class="kpi-top"><span>MAE</span><b>xgboost_ar</b></div>
+  <div class="kpi-value" data-count="0.121121">0.1211</div>
+  <div class="kpi-grid">
+    <span>Baseline</span><strong>N/A</strong>
+    <span>Absolute</span><strong>N/A</strong>
+    <span>Relative</span><strong class="pill neutral">· N/A</strong>
+  </div>
+</article>
+<article class="kpi-card standard">
+  <div class="kpi-top"><span>RMSE</span><b>xgboost_ar</b></div>
+  <div class="kpi-value" data-count="0.157555">0.1576</div>
+  <div class="kpi-grid">
+    <span>Baseline</span><strong>N/A</strong>
+    <span>Absolute</span><strong>N/A</strong>
+    <span>Relative</span><strong class="pill neutral">· N/A</strong>
+  </div>
+</article>
+<article class="kpi-card standard">
+  <div class="kpi-top"><span>WAPE</span><b>lightgbm_ar</b></div>
+  <div class="kpi-value" data-count="0.626514">0.6265</div>
+  <div class="kpi-grid">
+    <span>Baseline</span><strong>N/A</strong>
+    <span>Absolute</span><strong>N/A</strong>
+    <span>Relative</span><strong class="pill neutral">· N/A</strong>
+  </div>
+</article>
+<article class="kpi-card standard">
+  <div class="kpi-top"><span>MASE</span><b>lightgbm_ar</b></div>
+  <div class="kpi-value" data-count="0.361227">0.3612</div>
+  <div class="kpi-grid">
+    <span>Baseline</span><strong>N/A</strong>
+    <span>Absolute</span><strong>N/A</strong>
+    <span>Relative</span><strong class="pill neutral">· N/A</strong>
+  </div>
+</article>
+<article class="kpi-card standard">
+  <div class="kpi-top"><span>TRAIN_TIME_S</span><b>tabpfn_ts</b></div>
+  <div class="kpi-value" data-count="0">0</div>
+  <div class="kpi-grid">
+    <span>Baseline</span><strong>N/A</strong>
+    <span>Absolute</span><strong>N/A</strong>
+    <span>Relative</span><strong class="pill neutral">· N/A</strong>
+  </div>
+</article>
+<article class="kpi-card standard">
+  <div class="kpi-top"><span>INFERENCE_TIME_S</span><b>seasonal_naive</b></div>
+  <div class="kpi-value" data-count="0.00387748">0.003877</div>
+  <div class="kpi-grid">
+    <span>Baseline</span><strong>N/A</strong>
+    <span>Absolute</span><strong>N/A</strong>
+    <span>Relative</span><strong class="pill neutral">· N/A</strong>
+  </div>
+</article>
+<article class="kpi-card standard">
+  <div class="kpi-top"><span>GPU_MEMORY_MB</span><b>dummy_mean</b></div>
+  <div class="kpi-value" data-count="0">0</div>
+  <div class="kpi-grid">
+    <span>Baseline</span><strong>N/A</strong>
+    <span>Absolute</span><strong>N/A</strong>
+    <span>Relative</span><strong class="pill neutral">· N/A</strong>
+  </div>
+</article></div>
+    </section>
+
+    <section class="section" id="insights">
+      <div class="section-head"><div><h2>自动洞察</h2><p>只基于可用真实数据计算，不输出未经数据支持的结论。</p></div></div>
+      <div class="insight-grid">
+<article class="insight-card good">
+  <span>Best Model</span>
+  <h3>lightgbm_ar 在 SMAPE 上当前最优</h3>
+  <p>平均 SMAPE = 0.6322，由真实 forecast_metrics.csv 聚合计算。</p>
+</article>
+<article class="insight-card good">
+  <span>Baseline Gap</span>
+  <h3>相对 pilot_baseline 提升 88.60%</h3>
+  <p>absolute difference = +4.913，正负方向按 SMAPE 的优化方向计算。</p>
+</article>
+<article class="insight-card warn">
+  <span>Dataset Spread</span>
+  <h3>synthetic_exchange 与 stock_provided 差异最大</h3>
+  <p>跨数据集平均 SMAPE 范围为 0.9093 - 18.18。</p>
+</article>
+<article class="insight-card warn">
+  <span>Missing Signals</span>
+  <h3>1 项信号不可用</h3>
+  <p>报告已保留 N/A/warning 状态；不会用占位数据混入真实实验结论。</p>
+</article></div>
+    </section>
+
+    <section class="section" id="charts">
+      <div class="section-head"><div><h2>Dashboard 图表区</h2><p>Bento grid 布局，重点图表更大，辅助诊断图更紧凑。</p></div></div>
+      <div class="tabs">
+        <button class="tab-btn active" data-tab="overview-charts">Overview</button>
+        <button class="tab-btn" data-tab="baseline-charts">Baselines</button>
+        <button class="tab-btn" data-tab="diagnostics-charts">Diagnostics</button>
+        <button class="tab-btn" data-tab="interactive-charts">Interactive</button>
+      </div>
+      <div id="overview-charts" class="tab-pane active"><div class="chart-grid">
+<article class="chart-card span-8" data-chart="Baseline 相对变化">
+  <div class="chart-head"><h3>Baseline 相对变化</h3><a href="assets/premium_baseline_delta.svg">SVG</a></div>
+  <img src="assets/premium_baseline_delta.svg" alt="Baseline 相对变化"/>
+</article>
+<article class="chart-card span-4" data-chart="指标排名棒棒糖图">
+  <div class="chart-head"><h3>指标排名棒棒糖图</h3><a href="assets/premium_metric_lollipop_smape.svg">SVG</a></div>
+  <img src="assets/premium_metric_lollipop_smape.svg" alt="指标排名棒棒糖图"/>
+</article>
+<article class="chart-card span-6" data-chart="数据集-模型热力图">
+  <div class="chart-head"><h3>数据集-模型热力图</h3><a href="assets/premium_heatmap_smape.svg">SVG</a></div>
+  <img src="assets/premium_heatmap_smape.svg" alt="数据集-模型热力图"/>
+</article>
+<article class="chart-card span-6" data-chart="多指标雷达图">
+  <div class="chart-head"><h3>多指标雷达图</h3><a href="assets/premium_radar.svg">SVG</a></div>
+  <img src="assets/premium_radar.svg" alt="多指标雷达图"/>
+</article>
+<article class="chart-card span-4" data-chart="效率-性能散点图">
+  <div class="chart-head"><h3>效率-性能散点图</h3><a href="assets/premium_efficiency_frontier.svg">SVG</a></div>
+  <img src="assets/premium_efficiency_frontier.svg" alt="效率-性能散点图"/>
+</article>
+<article class="chart-card span-4" data-chart="Baseline 到 Current 斜率图">
+  <div class="chart-head"><h3>Baseline 到 Current 斜率图</h3><a href="assets/premium_slope_chart.svg">SVG</a></div>
+  <img src="assets/premium_slope_chart.svg" alt="Baseline 到 Current 斜率图"/>
+</article>
+<article class="chart-card span-4" data-chart="残差分布图">
+  <div class="chart-head"><h3>残差分布图</h3><a href="assets/premium_residual_distribution.svg">SVG</a></div>
+  <img src="assets/premium_residual_distribution.svg" alt="残差分布图"/>
+</article>
+<article class="chart-card span-8" data-chart="训练曲线（Demo 占位）">
+  <div class="chart-head"><h3>训练曲线（Demo 占位）</h3><span class="demo-badge">DEMO</span><a href="assets/premium_training_curve_demo.svg">SVG</a></div>
+  <img src="assets/premium_training_curve_demo.svg" alt="训练曲线（Demo 占位）"/>
+</article></div></div>
+      <div id="baseline-charts" class="tab-pane"><div class="panel"><h3>Baseline 对比表</h3><div class="table-wrap"><table class="dataframe data-table">
+  <thead>
+    <tr style="text-align: right;">
+      <th>baseline</th>
+      <th>metric</th>
+      <th>current_model</th>
+      <th>current_value</th>
+      <th>baseline_model</th>
+      <th>baseline_value</th>
+      <th>absolute_difference</th>
+      <th>relative_improvement_pct</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>pilot_baseline</td>
+      <td>smape</td>
+      <td>lightgbm_ar</td>
+      <td>0.6322</td>
+      <td>ridge_ar</td>
+      <td>5.545</td>
+      <td>4.913</td>
+      <td>88.6</td>
+    </tr>
+    <tr>
+      <td>pilot_baseline</td>
+      <td>smape</td>
+      <td>lightgbm_ar</td>
+      <td>0.6322</td>
+      <td>ridge_ar</td>
+      <td>5.545</td>
+      <td>4.913</td>
+      <td>88.6</td>
+    </tr>
+  </tbody>
+</table></div></div></div>
+      <div id="diagnostics-charts" class="tab-pane"><div class="chart-grid">
+<article class="chart-card span-8" data-chart="效率-性能散点图">
+  <div class="chart-head"><h3>效率-性能散点图</h3><a href="assets/premium_efficiency_frontier.svg">SVG</a></div>
+  <img src="assets/premium_efficiency_frontier.svg" alt="效率-性能散点图"/>
+</article>
+<article class="chart-card span-4" data-chart="残差分布图">
+  <div class="chart-head"><h3>残差分布图</h3><a href="assets/premium_residual_distribution.svg">SVG</a></div>
+  <img src="assets/premium_residual_distribution.svg" alt="残差分布图"/>
+</article>
+<article class="chart-card span-6" data-chart="训练曲线（Demo 占位）">
+  <div class="chart-head"><h3>训练曲线（Demo 占位）</h3><span class="demo-badge">DEMO</span><a href="assets/premium_training_curve_demo.svg">SVG</a></div>
+  <img src="assets/premium_training_curve_demo.svg" alt="训练曲线（Demo 占位）"/>
+</article></div></div>
+      <div id="interactive-charts" class="tab-pane">
+        <div class="panel">
+          <div class="toolbar"><select id="metric-select"></select><select id="dataset-select"></select></div>
+          <svg id="mini-ranking" class="mini-svg" viewBox="0 0 980 280"></svg>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="tables">
+      <div class="section-head"><div><h2>原始指标与 Baseline</h2><p>可筛选、可点击表头排序。</p></div></div>
+      <div class="panel">
+        <div class="toolbar"><input id="table-filter" placeholder="筛选 metrics 表格..."/></div>
+        <div class="table-wrap" id="metrics-table"><table class="dataframe data-table">
+  <thead>
+    <tr style="text-align: right;">
+      <th>run_id</th>
+      <th>model</th>
+      <th>dataset</th>
+      <th>domain</th>
+      <th>horizon</th>
+      <th>context_length</th>
+      <th>mse</th>
+      <th>mae</th>
+      <th>rmse</th>
+      <th>smape</th>
+      <th>wape</th>
+      <th>mase</th>
+      <th>train_time_s</th>
+      <th>inference_time_s</th>
+      <th>gpu_memory_mb</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>tabpfn_ts_20260528_155349</td>
+      <td>dummy_mean</td>
+      <td>synthetic_energy</td>
+      <td>energy</td>
+      <td>12</td>
+      <td>384</td>
+      <td>1.133</td>
+      <td>0.7925</td>
+      <td>1.064</td>
+      <td>5.658</td>
+      <td>5.626</td>
+      <td>1.75</td>
+      <td>0.000468</td>
+      <td>0.003722</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>tabpfn_ts_20260528_155349</td>
+      <td>seasonal_naive</td>
+      <td>synthetic_energy</td>
+      <td>energy</td>
+      <td>12</td>
+      <td>384</td>
+      <td>11.04</td>
+      <td>2.965</td>
+      <td>3.322</td>
+      <td>19.11</td>
+      <td>21.05</td>
+      <td>6.546</td>
+      <td>0.0003121</td>
+      <td>0.003348</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>tabpfn_ts_20260528_155349</td>
+      <td>moving_average</td>
+      <td>synthetic_energy</td>
+      <td>energy</td>
+      <td>12</td>
+      <td>384</td>
+      <td>2.088</td>
+      <td>1.264</td>
+      <td>1.445</td>
+      <td>8.756</td>
+      <td>8.973</td>
+      <td>2.791</td>
+      <td>0.0002904</td>
+      <td>0.003397</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>tabpfn_ts_20260528_155349</td>
+      <td>linear_trend</td>
+      <td>synthetic_energy</td>
+      <td>energy</td>
+      <td>12</td>
+      <td>384</td>
+      <td>3.399</td>
+      <td>1.667</td>
+      <td>1.844</td>
+      <td>11.34</td>
+      <td>11.83</td>
+      <td>3.68</td>
+      <td>0.0003322</td>
+      <td>0.003783</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>tabpfn_ts_20260528_155349</td>
+      <td>ridge_ar</td>
+      <td>synthetic_energy</td>
+      <td>energy</td>
+      <td>12</td>
+      <td>384</td>
+      <td>0.002365</td>
+      <td>0.03524</td>
+      <td>0.04863</td>
+      <td>0.2465</td>
+      <td>0.2502</td>
+      <td>0.07781</td>
+      <td>0.01996</td>
+      <td>0.009237</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>tabpfn_ts_20260528_155349</td>
+      <td>hist_gradient_boosting_ar</td>
+      <td>synthetic_energy</td>
+      <td>energy</td>
+      <td>12</td>
+      <td>384</td>
+      <td>0.0006871</td>
+      <td>0.0228</td>
+      <td>0.02621</td>
+      <td>0.161</td>
+      <td>0.1619</td>
+      <td>0.05034</td>
+      <td>0.62</td>
+      <td>0.1477</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>tabpfn_ts_20260528_155349</td>
+      <td>lightgbm_ar</td>
+      <td>synthetic_energy</td>
+      <td>energy</td>
+      <td>12</td>
+      <td>384</td>
+      <td>0.002609</td>
+      <td>0.04472</td>
+      <td>0.05108</td>
+      <td>0.3248</td>
+      <td>0.3175</td>
+      <td>0.09874</td>
+      <td>0.5037</td>
+      <td>0.02588</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>tabpfn_ts_20260528_155349</td>
+      <td>xgboost_ar</td>
+      <td>synthetic_energy</td>
+      <td>energy</td>
+      <td>12</td>
+      <td>384</td>
+      <td>0.009334</td>
+      <td>0.08221</td>
+      <td>0.09661</td>
+      <td>0.5973</td>
+      <td>0.5836</td>
+      <td>0.1815</td>
+      <td>0.2531</td>
+      <td>0.02395</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>tabpfn_ts_20260528_155349</td>
+      <td>tabpfn_ts</td>
+      <td>synthetic_energy</td>
+      <td>energy</td>
+      <td>12</td>
+      <td>384</td>
+      <td>0.001962</td>
+      <td>0.0352</td>
+      <td>0.0443</td>
+      <td>0.2586</td>
+      <td>0.2499</td>
+      <td>0.07772</td>
+      <td>0</td>
+      <td>3.806</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>tabpfn_ts_20260528_155349</td>
+      <td>dummy_mean</td>
+      <td>synthetic_traffic</td>
+      <td>traffic</td>
+      <td>12</td>
+      <td>384</td>
+      <td>22.8</td>
+      <td>4.25</td>
+      <td>4.775</td>
+      <td>14.59</td>
+      <td>15.27</td>
+      <td>2.985</td>
+      <td>0.00074</td>
+      <td>0.004563</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>tabpfn_ts_20260528_155349</td>
+      <td>seasonal_naive</td>
+      <td>synthetic_traffic</td>
+      <td>traffic</td>
+      <td>12</td>
+      <td>384</td>
+      <td>145.5</td>
+      <td>10.93</td>
+      <td>12.06</td>
+      <td>32.88</td>
+      <td>39.28</td>
+      <td>7.679</td>
+      <td>0.0004032</td>
+      <td>0.004587</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>tabpfn_ts_20260528_155349</td>
+      <td>moving_average</td>
+      <td>synthetic_traffic</td>
+      <td>traffic</td>
+      <td>12</td>
+      <td>384</td>
+      <td>42.87</td>
+      <td>6.005</td>
+      <td>6.548</td>
+      <td>19.87</td>
+      <td>21.57</td>
+      <td>4.217</td>
+      <td>0.0003966</td>
+      <td>0.004826</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>tabpfn_ts_20260528_155349</td>
+      <td>linear_trend</td>
+      <td>synthetic_traffic</td>
+      <td>traffic</td>
+      <td>12</td>
+      <td>384</td>
+      <td>21.08</td>
+      <td>4.066</td>
+      <td>4.591</td>
+      <td>14.01</td>
+      <td>14.61</td>
+      <td>2.856</td>
+      <td>0.0004018</td>
+      <td>0.005069</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>tabpfn_ts_20260528_155349</td>
+      <td>ridge_ar</td>
+      <td>synthetic_traffic</td>
+      <td>traffic</td>
+      <td>12</td>
+      <td>384</td>
+      <td>0.2598</td>
+      <td>0.4675</td>
+      <td>0.5097</td>
+      <td>1.715</td>
+      <td>1.68</td>
+      <td>0.3284</td>
+      <td>0.02766</td>
+      <td>0.01276</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>tabpfn_ts_20260528_155349</td>
+      <td>hist_gradient_boosting_ar</td>
+      <td>synthetic_traffic</td>
+      <td>traffic</td>
+      <td>12</td>
+      <td>384</td>
+      <td>0.373</td>
+      <td>0.5075</td>
+      <td>0.6108</td>
+      <td>1.856</td>
+      <td>1.823</td>
+      <td>0.3564</td>
+      <td>0.6157</td>
+      <td>0.1579</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>tabpfn_ts_20260528_155349</td>
+      <td>lightgbm_ar</td>
+      <td>synthetic_traffic</td>
+      <td>traffic</td>
+      <td>12</td>
+      <td>384</td>
+      <td>0.1752</td>
+      <td>0.3011</td>
+      <td>0.4186</td>
+      <td>1.118</td>
+      <td>1.082</td>
+      <td>0.2115</td>
+      <td>0.5064</td>
+      <td>0.03157</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>tabpfn_ts_20260528_155349</td>
+      <td>xgboost_ar</td>
+      <td>synthetic_traffic</td>
+      <td>traffic</td>
+      <td>12</td>
+      <td>384</td>
+      <td>0.07136</td>
+      <td>0.1967</td>
+      <td>0.2671</td>
+      <td>0.7352</td>
+      <td>0.7066</td>
+      <td>0.1381</td>
+      <td>0.2154</td>
+      <td>0.0267</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>tabpfn_ts_20260528_155349</td>
+      <td>tabpfn_ts</td>
+      <td>synthetic_traffic</td>
+      <td>traffic</td>
+      <td>12</td>
+      <td>384</td>
+      <td>0.6307</td>
+      <td>0.5498</td>
+      <td>0.7942</td>
+      <td>1.945</td>
+      <td>1.975</td>
+      <td>0.3861</td>
+      <td>0</td>
+      <td>2.357</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>tabpfn_ts_20260528_155349</td>
+      <td>dummy_mean</td>
+      <td>synthetic_weather</td>
+      <td>weather</td>
+      <td>12</td>
+      <td>384</td>
+      <td>28.42</td>
+      <td>5.315</td>
+      <td>5.331</td>
+      <td>25.45</td>
+      <td>22.58</td>
+      <td>25.97</td>
+      <td>0.0004847</td>
+      <td>0.003209</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>tabpfn_ts_20260528_155349</td>
+      <td>seasonal_naive</td>
+      <td>synthetic_weather</td>
+      <td>weather</td>
+      <td>12</td>
+      <td>384</td>
+      <td>0.7422</td>
+      <td>0.7493</td>
+      <td>0.8615</td>
+      <td>3.199</td>
+      <td>3.183</td>
+      <td>3.66</td>
+      <td>0.0003933</td>
+      <td>0.003402</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>tabpfn_ts_20260528_155349</td>
+      <td>moving_average</td>
+      <td>synthetic_weather</td>
+      <td>weather</td>
+      <td>12</td>
+      <td>384</td>
+      <td>1.325</td>
+      <td>1.076</td>
+      <td>1.151</td>
+      <td>4.664</td>
+      <td>4.57</td>
+      <td>5.256</td>
+      <td>0.0003852</td>
+      <td>0.003319</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>tabpfn_ts_20260528_155349</td>
+      <td>linear_trend</td>
+      <td>synthetic_weather</td>
+      <td>weather</td>
+      <td>12</td>
+      <td>384</td>
+      <td>19.04</td>
+      <td>4.342</td>
+      <td>4.363</td>
+      <td>20.32</td>
+      <td>18.45</td>
+      <td>21.21</td>
+      <td>0.0003831</td>
+      <td>0.003572</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>tabpfn_ts_20260528_155349</td>
+      <td>ridge_ar</td>
+      <td>synthetic_weather</td>
+      <td>weather</td>
+      <td>12</td>
+      <td>384</td>
+      <td>0.4797</td>
+      <td>0.5876</td>
+      <td>0.6926</td>
+      <td>2.481</td>
+      <td>2.496</td>
+      <td>2.871</td>
+      <td>0.03118</td>
+      <td>0.008652</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>tabpfn_ts_20260528_155349</td>
+      <td>hist_gradient_boosting_ar</td>
+      <td>synthetic_weather</td>
+      <td>weather</td>
+      <td>12</td>
+      <td>384</td>
+      <td>5.736e-05</td>
+      <td>0.005951</td>
+      <td>0.007574</td>
+      <td>0.02534</td>
+      <td>0.02528</td>
+      <td>0.02907</td>
+      <td>0.7149</td>
+      <td>0.1055</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>tabpfn_ts_20260528_155349</td>
+      <td>lightgbm_ar</td>
+      <td>synthetic_weather</td>
+      <td>weather</td>
+      <td>12</td>
+      <td>384</td>
+      <td>0.002361</td>
+      <td>0.03401</td>
+      <td>0.04859</td>
+      <td>0.1454</td>
+      <td>0.1445</td>
+      <td>0.1661</td>
+      <td>0.513</td>
+      <td>0.02097</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>tabpfn_ts_20260528_155349</td>
+      <td>xgboost_ar</td>
+      <td>synthetic_weather</td>
+      <td>weather</td>
+      <td>12</td>
+      <td>384</td>
+      <td>0.006525</td>
+      <td>0.06545</td>
+      <td>0.08078</td>
+      <td>0.2822</td>
+      <td>0.278</td>
+      <td>0.3197</td>
+      <td>0.2265</td>
+      <td>0.02266</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>tabpfn_ts_20260528_155349</td>
+      <td>tabpfn_ts</td>
+      <td>synthetic_weather</td>
+      <td>weather</td>
+      <td>12</td>
+      <td>384</td>
+      <td>0.2528</td>
+      <td>0.3911</td>
+      <td>0.5028</td>
+      <td>1.662</td>
+      <td>1.661</td>
+      <td>1.911</td>
+      <td>0</td>
+      <td>1.563</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>tabpfn_ts_20260528_155349</td>
+      <td>dummy_mean</td>
+      <td>synthetic_exchange</td>
+      <td>economics</td>
+      <td>12</td>
+      <td>384</td>
+      <td>3.904</td>
+      <td>1.975</td>
+      <td>1.976</td>
+      <td>47.33</td>
+      <td>38.28</td>
+      <td>44.85</td>
+      <td>0.000517</td>
+      <td>0.004445</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>tabpfn_ts_20260528_155349</td>
+      <td>seasonal_naive</td>
+      <td>synthetic_exchange</td>
+      <td>economics</td>
+      <td>12</td>
+      <td>384</td>
+      <td>0.02396</td>
+      <td>0.1259</td>
+      <td>0.1548</td>
+      <td>2.473</td>
+      <td>2.44</td>
+      <td>2.858</td>
+      <td>0.0004286</td>
+      <td>0.004636</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>tabpfn_ts_20260528_155349</td>
+      <td>moving_average</td>
+      <td>synthetic_exchange</td>
+      <td>economics</td>
+      <td>12</td>
+      <td>384</td>
+      <td>0.03386</td>
+      <td>0.1748</td>
+      <td>0.184</td>
+      <td>3.44</td>
+      <td>3.387</td>
+      <td>3.969</td>
+      <td>0.0004116</td>
+      <td>0.004729</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>tabpfn_ts_20260528_155349</td>
+      <td>linear_trend</td>
+      <td>synthetic_exchange</td>
+      <td>economics</td>
+      <td>12</td>
+      <td>384</td>
+      <td>0.003409</td>
+      <td>0.05322</td>
+      <td>0.05838</td>
+      <td>1.031</td>
+      <td>1.031</td>
+      <td>1.209</td>
+      <td>0.0004308</td>
+      <td>0.00516</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>tabpfn_ts_20260528_155349</td>
+      <td>ridge_ar</td>
+      <td>synthetic_exchange</td>
+      <td>economics</td>
+      <td>12</td>
+      <td>384</td>
+      <td>8.324e+11</td>
+      <td>2.874e+05</td>
+      <td>9.124e+05</td>
+      <td>105.1</td>
+      <td>5.57e+06</td>
+      <td>6.526e+06</td>
+      <td>0.0464</td>
+      <td>0.01257</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>tabpfn_ts_20260528_155349</td>
+      <td>hist_gradient_boosting_ar</td>
+      <td>synthetic_exchange</td>
+      <td>economics</td>
+      <td>12</td>
+      <td>384</td>
+      <td>0.005649</td>
+      <td>0.06328</td>
+      <td>0.07516</td>
+      <td>1.228</td>
+      <td>1.226</td>
+      <td>1.437</td>
+      <td>0.9045</td>
+      <td>0.1452</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>tabpfn_ts_20260528_155349</td>
+      <td>lightgbm_ar</td>
+      <td>synthetic_exchange</td>
+      <td>economics</td>
+      <td>12</td>
+      <td>384</td>
+      <td>0.004454</td>
+      <td>0.05551</td>
+      <td>0.06674</td>
+      <td>1.077</td>
+      <td>1.076</td>
+      <td>1.261</td>
+      <td>0.4875</td>
+      <td>0.0211</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>tabpfn_ts_20260528_155349</td>
+      <td>xgboost_ar</td>
+      <td>synthetic_exchange</td>
+      <td>economics</td>
+      <td>12</td>
+      <td>384</td>
+      <td>0.007023</td>
+      <td>0.07112</td>
+      <td>0.0838</td>
+      <td>1.382</td>
+      <td>1.378</td>
+      <td>1.615</td>
+      <td>0.2467</td>
+      <td>0.0246</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>tabpfn_ts_20260528_155349</td>
+      <td>tabpfn_ts</td>
+      <td>synthetic_exchange</td>
+      <td>economics</td>
+      <td>12</td>
+      <td>384</td>
+      <td>0.001467</td>
+      <td>0.03067</td>
+      <td>0.03831</td>
+      <td>0.5933</td>
+      <td>0.5943</td>
+      <td>0.6963</td>
+      <td>0</td>
+      <td>1.795</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>tabpfn_ts_20260528_155349</td>
+      <td>dummy_mean</td>
+      <td>stock_provided</td>
+      <td>finance</td>
+      <td>12</td>
+      <td>384</td>
+      <td>1.699</td>
+      <td>0.8152</td>
+      <td>1.303</td>
+      <td>1.428</td>
+      <td>1.71</td>
+      <td>0.2308</td>
+      <td>0.0004656</td>
+      <td>0.003568</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>tabpfn_ts_20260528_155349</td>
+      <td>seasonal_naive</td>
+      <td>stock_provided</td>
+      <td>finance</td>
+      <td>12</td>
+      <td>384</td>
+      <td>0.1452</td>
+      <td>0.2786</td>
+      <td>0.381</td>
+      <td>0.7645</td>
+      <td>0.5844</td>
+      <td>0.07886</td>
+      <td>0.0003192</td>
+      <td>0.003414</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>tabpfn_ts_20260528_155349</td>
+      <td>moving_average</td>
+      <td>stock_provided</td>
+      <td>finance</td>
+      <td>12</td>
+      <td>384</td>
+      <td>0.07349</td>
+      <td>0.1996</td>
+      <td>0.2711</td>
+      <td>0.5478</td>
+      <td>0.4186</td>
+      <td>0.05649</td>
+      <td>0.0003056</td>
+      <td>0.00346</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>tabpfn_ts_20260528_155349</td>
+      <td>linear_trend</td>
+      <td>stock_provided</td>
+      <td>finance</td>
+      <td>12</td>
+      <td>384</td>
+      <td>3.482</td>
+      <td>1.603</td>
+      <td>1.866</td>
+      <td>3.43</td>
+      <td>3.362</td>
+      <td>0.4536</td>
+      <td>0.0002994</td>
+      <td>0.003857</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>tabpfn_ts_20260528_155349</td>
+      <td>ridge_ar</td>
+      <td>stock_provided</td>
+      <td>finance</td>
+      <td>12</td>
+      <td>384</td>
+      <td>0.0197</td>
+      <td>0.09908</td>
+      <td>0.1404</td>
+      <td>0.2633</td>
+      <td>0.2078</td>
+      <td>0.02805</td>
+      <td>0.03335</td>
+      <td>0.009251</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>tabpfn_ts_20260528_155349</td>
+      <td>hist_gradient_boosting_ar</td>
+      <td>stock_provided</td>
+      <td>finance</td>
+      <td>12</td>
+      <td>384</td>
+      <td>0.07328</td>
+      <td>0.1785</td>
+      <td>0.2707</td>
+      <td>0.4137</td>
+      <td>0.3745</td>
+      <td>0.05054</td>
+      <td>0.7293</td>
+      <td>0.1179</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>tabpfn_ts_20260528_155349</td>
+      <td>lightgbm_ar</td>
+      <td>stock_provided</td>
+      <td>finance</td>
+      <td>12</td>
+      <td>384</td>
+      <td>0.1128</td>
+      <td>0.2446</td>
+      <td>0.3359</td>
+      <td>0.4961</td>
+      <td>0.5131</td>
+      <td>0.06924</td>
+      <td>0.4827</td>
+      <td>0.02184</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>tabpfn_ts_20260528_155349</td>
+      <td>xgboost_ar</td>
+      <td>stock_provided</td>
+      <td>finance</td>
+      <td>12</td>
+      <td>384</td>
+      <td>0.06731</td>
+      <td>0.1901</td>
+      <td>0.2594</td>
+      <td>0.4101</td>
+      <td>0.3988</td>
+      <td>0.05382</td>
+      <td>0.2326</td>
+      <td>0.0269</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>tabpfn_ts_20260528_155349</td>
+      <td>tabpfn_ts</td>
+      <td>stock_provided</td>
+      <td>finance</td>
+      <td>12</td>
+      <td>384</td>
+      <td>0.0728</td>
+      <td>0.2157</td>
+      <td>0.2698</td>
+      <td>0.4308</td>
+      <td>0.4524</td>
+      <td>0.06104</td>
+      <td>0</td>
+      <td>2.176</td>
+      <td>0</td>
+    </tr>
+  </tbody>
+</table></div>
+      </div>
+    </section>
+
+    <section class="section" id="config">
+      <div class="section-head"><div><h2>配置、环境与 Warning</h2><p>所有缺失信号以 warning 保留。</p></div></div>
+      <details open><summary>配置参数</summary><pre>{
+  &quot;/Users/lioz/Desktop/组里/tabpfn_TS_26-5-26/tabpfn-quant/configs/config.yaml&quot;: {
+    &quot;defaults&quot;: [
+      {
+        &quot;dataset&quot;: &quot;etth1&quot;
+      },
+      {
+        &quot;model&quot;: &quot;seasonal_naive&quot;
+      },
+      {
+        &quot;experiment&quot;: &quot;e1_zeroshot&quot;
+      },
+      &quot;_self_&quot;
+    ],
+    &quot;seed&quot;: 42,
+    &quot;output_dir&quot;: &quot;results&quot;,
+    &quot;wandb&quot;: {
+      &quot;project&quot;: &quot;tabpfn-quant&quot;,
+      &quot;mode&quot;: &quot;offline&quot;,
+      &quot;entity&quot;: null
+    },
+    &quot;hydra&quot;: {
+      &quot;run&quot;: {
+        &quot;dir&quot;: &quot;outputs/${now:%Y-%m-%d}/${now:%H-%M-%S}&quot;
+      }
+    }
+  }
+}</pre></details>
+      <br/>
+      <details><summary>运行环境</summary><pre>{
+  &quot;python&quot;: &quot;3.12.7&quot;,
+  &quot;platform&quot;: &quot;macOS-26.3.1-arm64-arm-64bit&quot;,
+  &quot;git_head&quot;: &quot;88b831a&quot;,
+  &quot;git_dirty&quot;: true
+}</pre></details>
+      <br/>
+      <details open><summary>Raw metrics snapshot</summary><div class="table-wrap"><table class="dataframe data-table">
+  <thead>
+    <tr style="text-align: right;">
+      <th>run_id</th>
+      <th>model</th>
+      <th>dataset</th>
+      <th>domain</th>
+      <th>horizon</th>
+      <th>context_length</th>
+      <th>mse</th>
+      <th>mae</th>
+      <th>rmse</th>
+      <th>smape</th>
+      <th>wape</th>
+      <th>mase</th>
+      <th>train_time_s</th>
+      <th>inference_time_s</th>
+      <th>gpu_memory_mb</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>tabpfn_ts_20260528_155349</td>
+      <td>dummy_mean</td>
+      <td>synthetic_energy</td>
+      <td>energy</td>
+      <td>12</td>
+      <td>384</td>
+      <td>1.133</td>
+      <td>0.7925</td>
+      <td>1.064</td>
+      <td>5.658</td>
+      <td>5.626</td>
+      <td>1.75</td>
+      <td>0.000468</td>
+      <td>0.003722</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>tabpfn_ts_20260528_155349</td>
+      <td>seasonal_naive</td>
+      <td>synthetic_energy</td>
+      <td>energy</td>
+      <td>12</td>
+      <td>384</td>
+      <td>11.04</td>
+      <td>2.965</td>
+      <td>3.322</td>
+      <td>19.11</td>
+      <td>21.05</td>
+      <td>6.546</td>
+      <td>0.0003121</td>
+      <td>0.003348</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>tabpfn_ts_20260528_155349</td>
+      <td>moving_average</td>
+      <td>synthetic_energy</td>
+      <td>energy</td>
+      <td>12</td>
+      <td>384</td>
+      <td>2.088</td>
+      <td>1.264</td>
+      <td>1.445</td>
+      <td>8.756</td>
+      <td>8.973</td>
+      <td>2.791</td>
+      <td>0.0002904</td>
+      <td>0.003397</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>tabpfn_ts_20260528_155349</td>
+      <td>linear_trend</td>
+      <td>synthetic_energy</td>
+      <td>energy</td>
+      <td>12</td>
+      <td>384</td>
+      <td>3.399</td>
+      <td>1.667</td>
+      <td>1.844</td>
+      <td>11.34</td>
+      <td>11.83</td>
+      <td>3.68</td>
+      <td>0.0003322</td>
+      <td>0.003783</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>tabpfn_ts_20260528_155349</td>
+      <td>ridge_ar</td>
+      <td>synthetic_energy</td>
+      <td>energy</td>
+      <td>12</td>
+      <td>384</td>
+      <td>0.002365</td>
+      <td>0.03524</td>
+      <td>0.04863</td>
+      <td>0.2465</td>
+      <td>0.2502</td>
+      <td>0.07781</td>
+      <td>0.01996</td>
+      <td>0.009237</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>tabpfn_ts_20260528_155349</td>
+      <td>hist_gradient_boosting_ar</td>
+      <td>synthetic_energy</td>
+      <td>energy</td>
+      <td>12</td>
+      <td>384</td>
+      <td>0.0006871</td>
+      <td>0.0228</td>
+      <td>0.02621</td>
+      <td>0.161</td>
+      <td>0.1619</td>
+      <td>0.05034</td>
+      <td>0.62</td>
+      <td>0.1477</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>tabpfn_ts_20260528_155349</td>
+      <td>lightgbm_ar</td>
+      <td>synthetic_energy</td>
+      <td>energy</td>
+      <td>12</td>
+      <td>384</td>
+      <td>0.002609</td>
+      <td>0.04472</td>
+      <td>0.05108</td>
+      <td>0.3248</td>
+      <td>0.3175</td>
+      <td>0.09874</td>
+      <td>0.5037</td>
+      <td>0.02588</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>tabpfn_ts_20260528_155349</td>
+      <td>xgboost_ar</td>
+      <td>synthetic_energy</td>
+      <td>energy</td>
+      <td>12</td>
+      <td>384</td>
+      <td>0.009334</td>
+      <td>0.08221</td>
+      <td>0.09661</td>
+      <td>0.5973</td>
+      <td>0.5836</td>
+      <td>0.1815</td>
+      <td>0.2531</td>
+      <td>0.02395</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>tabpfn_ts_20260528_155349</td>
+      <td>tabpfn_ts</td>
+      <td>synthetic_energy</td>
+      <td>energy</td>
+      <td>12</td>
+      <td>384</td>
+      <td>0.001962</td>
+      <td>0.0352</td>
+      <td>0.0443</td>
+      <td>0.2586</td>
+      <td>0.2499</td>
+      <td>0.07772</td>
+      <td>0</td>
+      <td>3.806</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>tabpfn_ts_20260528_155349</td>
+      <td>dummy_mean</td>
+      <td>synthetic_traffic</td>
+      <td>traffic</td>
+      <td>12</td>
+      <td>384</td>
+      <td>22.8</td>
+      <td>4.25</td>
+      <td>4.775</td>
+      <td>14.59</td>
+      <td>15.27</td>
+      <td>2.985</td>
+      <td>0.00074</td>
+      <td>0.004563</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>tabpfn_ts_20260528_155349</td>
+      <td>seasonal_naive</td>
+      <td>synthetic_traffic</td>
+      <td>traffic</td>
+      <td>12</td>
+      <td>384</td>
+      <td>145.5</td>
+      <td>10.93</td>
+      <td>12.06</td>
+      <td>32.88</td>
+      <td>39.28</td>
+      <td>7.679</td>
+      <td>0.0004032</td>
+      <td>0.004587</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>tabpfn_ts_20260528_155349</td>
+      <td>moving_average</td>
+      <td>synthetic_traffic</td>
+      <td>traffic</td>
+      <td>12</td>
+      <td>384</td>
+      <td>42.87</td>
+      <td>6.005</td>
+      <td>6.548</td>
+      <td>19.87</td>
+      <td>21.57</td>
+      <td>4.217</td>
+      <td>0.0003966</td>
+      <td>0.004826</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>tabpfn_ts_20260528_155349</td>
+      <td>linear_trend</td>
+      <td>synthetic_traffic</td>
+      <td>traffic</td>
+      <td>12</td>
+      <td>384</td>
+      <td>21.08</td>
+      <td>4.066</td>
+      <td>4.591</td>
+      <td>14.01</td>
+      <td>14.61</td>
+      <td>2.856</td>
+      <td>0.0004018</td>
+      <td>0.005069</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>tabpfn_ts_20260528_155349</td>
+      <td>ridge_ar</td>
+      <td>synthetic_traffic</td>
+      <td>traffic</td>
+      <td>12</td>
+      <td>384</td>
+      <td>0.2598</td>
+      <td>0.4675</td>
+      <td>0.5097</td>
+      <td>1.715</td>
+      <td>1.68</td>
+      <td>0.3284</td>
+      <td>0.02766</td>
+      <td>0.01276</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>tabpfn_ts_20260528_155349</td>
+      <td>hist_gradient_boosting_ar</td>
+      <td>synthetic_traffic</td>
+      <td>traffic</td>
+      <td>12</td>
+      <td>384</td>
+      <td>0.373</td>
+      <td>0.5075</td>
+      <td>0.6108</td>
+      <td>1.856</td>
+      <td>1.823</td>
+      <td>0.3564</td>
+      <td>0.6157</td>
+      <td>0.1579</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>tabpfn_ts_20260528_155349</td>
+      <td>lightgbm_ar</td>
+      <td>synthetic_traffic</td>
+      <td>traffic</td>
+      <td>12</td>
+      <td>384</td>
+      <td>0.1752</td>
+      <td>0.3011</td>
+      <td>0.4186</td>
+      <td>1.118</td>
+      <td>1.082</td>
+      <td>0.2115</td>
+      <td>0.5064</td>
+      <td>0.03157</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>tabpfn_ts_20260528_155349</td>
+      <td>xgboost_ar</td>
+      <td>synthetic_traffic</td>
+      <td>traffic</td>
+      <td>12</td>
+      <td>384</td>
+      <td>0.07136</td>
+      <td>0.1967</td>
+      <td>0.2671</td>
+      <td>0.7352</td>
+      <td>0.7066</td>
+      <td>0.1381</td>
+      <td>0.2154</td>
+      <td>0.0267</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>tabpfn_ts_20260528_155349</td>
+      <td>tabpfn_ts</td>
+      <td>synthetic_traffic</td>
+      <td>traffic</td>
+      <td>12</td>
+      <td>384</td>
+      <td>0.6307</td>
+      <td>0.5498</td>
+      <td>0.7942</td>
+      <td>1.945</td>
+      <td>1.975</td>
+      <td>0.3861</td>
+      <td>0</td>
+      <td>2.357</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>tabpfn_ts_20260528_155349</td>
+      <td>dummy_mean</td>
+      <td>synthetic_weather</td>
+      <td>weather</td>
+      <td>12</td>
+      <td>384</td>
+      <td>28.42</td>
+      <td>5.315</td>
+      <td>5.331</td>
+      <td>25.45</td>
+      <td>22.58</td>
+      <td>25.97</td>
+      <td>0.0004847</td>
+      <td>0.003209</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>tabpfn_ts_20260528_155349</td>
+      <td>seasonal_naive</td>
+      <td>synthetic_weather</td>
+      <td>weather</td>
+      <td>12</td>
+      <td>384</td>
+      <td>0.7422</td>
+      <td>0.7493</td>
+      <td>0.8615</td>
+      <td>3.199</td>
+      <td>3.183</td>
+      <td>3.66</td>
+      <td>0.0003933</td>
+      <td>0.003402</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>tabpfn_ts_20260528_155349</td>
+      <td>moving_average</td>
+      <td>synthetic_weather</td>
+      <td>weather</td>
+      <td>12</td>
+      <td>384</td>
+      <td>1.325</td>
+      <td>1.076</td>
+      <td>1.151</td>
+      <td>4.664</td>
+      <td>4.57</td>
+      <td>5.256</td>
+      <td>0.0003852</td>
+      <td>0.003319</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>tabpfn_ts_20260528_155349</td>
+      <td>linear_trend</td>
+      <td>synthetic_weather</td>
+      <td>weather</td>
+      <td>12</td>
+      <td>384</td>
+      <td>19.04</td>
+      <td>4.342</td>
+      <td>4.363</td>
+      <td>20.32</td>
+      <td>18.45</td>
+      <td>21.21</td>
+      <td>0.0003831</td>
+      <td>0.003572</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>tabpfn_ts_20260528_155349</td>
+      <td>ridge_ar</td>
+      <td>synthetic_weather</td>
+      <td>weather</td>
+      <td>12</td>
+      <td>384</td>
+      <td>0.4797</td>
+      <td>0.5876</td>
+      <td>0.6926</td>
+      <td>2.481</td>
+      <td>2.496</td>
+      <td>2.871</td>
+      <td>0.03118</td>
+      <td>0.008652</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>tabpfn_ts_20260528_155349</td>
+      <td>hist_gradient_boosting_ar</td>
+      <td>synthetic_weather</td>
+      <td>weather</td>
+      <td>12</td>
+      <td>384</td>
+      <td>5.736e-05</td>
+      <td>0.005951</td>
+      <td>0.007574</td>
+      <td>0.02534</td>
+      <td>0.02528</td>
+      <td>0.02907</td>
+      <td>0.7149</td>
+      <td>0.1055</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>tabpfn_ts_20260528_155349</td>
+      <td>lightgbm_ar</td>
+      <td>synthetic_weather</td>
+      <td>weather</td>
+      <td>12</td>
+      <td>384</td>
+      <td>0.002361</td>
+      <td>0.03401</td>
+      <td>0.04859</td>
+      <td>0.1454</td>
+      <td>0.1445</td>
+      <td>0.1661</td>
+      <td>0.513</td>
+      <td>0.02097</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>tabpfn_ts_20260528_155349</td>
+      <td>xgboost_ar</td>
+      <td>synthetic_weather</td>
+      <td>weather</td>
+      <td>12</td>
+      <td>384</td>
+      <td>0.006525</td>
+      <td>0.06545</td>
+      <td>0.08078</td>
+      <td>0.2822</td>
+      <td>0.278</td>
+      <td>0.3197</td>
+      <td>0.2265</td>
+      <td>0.02266</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>tabpfn_ts_20260528_155349</td>
+      <td>tabpfn_ts</td>
+      <td>synthetic_weather</td>
+      <td>weather</td>
+      <td>12</td>
+      <td>384</td>
+      <td>0.2528</td>
+      <td>0.3911</td>
+      <td>0.5028</td>
+      <td>1.662</td>
+      <td>1.661</td>
+      <td>1.911</td>
+      <td>0</td>
+      <td>1.563</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>tabpfn_ts_20260528_155349</td>
+      <td>dummy_mean</td>
+      <td>synthetic_exchange</td>
+      <td>economics</td>
+      <td>12</td>
+      <td>384</td>
+      <td>3.904</td>
+      <td>1.975</td>
+      <td>1.976</td>
+      <td>47.33</td>
+      <td>38.28</td>
+      <td>44.85</td>
+      <td>0.000517</td>
+      <td>0.004445</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>tabpfn_ts_20260528_155349</td>
+      <td>seasonal_naive</td>
+      <td>synthetic_exchange</td>
+      <td>economics</td>
+      <td>12</td>
+      <td>384</td>
+      <td>0.02396</td>
+      <td>0.1259</td>
+      <td>0.1548</td>
+      <td>2.473</td>
+      <td>2.44</td>
+      <td>2.858</td>
+      <td>0.0004286</td>
+      <td>0.004636</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>tabpfn_ts_20260528_155349</td>
+      <td>moving_average</td>
+      <td>synthetic_exchange</td>
+      <td>economics</td>
+      <td>12</td>
+      <td>384</td>
+      <td>0.03386</td>
+      <td>0.1748</td>
+      <td>0.184</td>
+      <td>3.44</td>
+      <td>3.387</td>
+      <td>3.969</td>
+      <td>0.0004116</td>
+      <td>0.004729</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>tabpfn_ts_20260528_155349</td>
+      <td>linear_trend</td>
+      <td>synthetic_exchange</td>
+      <td>economics</td>
+      <td>12</td>
+      <td>384</td>
+      <td>0.003409</td>
+      <td>0.05322</td>
+      <td>0.05838</td>
+      <td>1.031</td>
+      <td>1.031</td>
+      <td>1.209</td>
+      <td>0.0004308</td>
+      <td>0.00516</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>tabpfn_ts_20260528_155349</td>
+      <td>ridge_ar</td>
+      <td>synthetic_exchange</td>
+      <td>economics</td>
+      <td>12</td>
+      <td>384</td>
+      <td>8.324e+11</td>
+      <td>2.874e+05</td>
+      <td>9.124e+05</td>
+      <td>105.1</td>
+      <td>5.57e+06</td>
+      <td>6.526e+06</td>
+      <td>0.0464</td>
+      <td>0.01257</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>tabpfn_ts_20260528_155349</td>
+      <td>hist_gradient_boosting_ar</td>
+      <td>synthetic_exchange</td>
+      <td>economics</td>
+      <td>12</td>
+      <td>384</td>
+      <td>0.005649</td>
+      <td>0.06328</td>
+      <td>0.07516</td>
+      <td>1.228</td>
+      <td>1.226</td>
+      <td>1.437</td>
+      <td>0.9045</td>
+      <td>0.1452</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>tabpfn_ts_20260528_155349</td>
+      <td>lightgbm_ar</td>
+      <td>synthetic_exchange</td>
+      <td>economics</td>
+      <td>12</td>
+      <td>384</td>
+      <td>0.004454</td>
+      <td>0.05551</td>
+      <td>0.06674</td>
+      <td>1.077</td>
+      <td>1.076</td>
+      <td>1.261</td>
+      <td>0.4875</td>
+      <td>0.0211</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>tabpfn_ts_20260528_155349</td>
+      <td>xgboost_ar</td>
+      <td>synthetic_exchange</td>
+      <td>economics</td>
+      <td>12</td>
+      <td>384</td>
+      <td>0.007023</td>
+      <td>0.07112</td>
+      <td>0.0838</td>
+      <td>1.382</td>
+      <td>1.378</td>
+      <td>1.615</td>
+      <td>0.2467</td>
+      <td>0.0246</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>tabpfn_ts_20260528_155349</td>
+      <td>tabpfn_ts</td>
+      <td>synthetic_exchange</td>
+      <td>economics</td>
+      <td>12</td>
+      <td>384</td>
+      <td>0.001467</td>
+      <td>0.03067</td>
+      <td>0.03831</td>
+      <td>0.5933</td>
+      <td>0.5943</td>
+      <td>0.6963</td>
+      <td>0</td>
+      <td>1.795</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>tabpfn_ts_20260528_155349</td>
+      <td>dummy_mean</td>
+      <td>stock_provided</td>
+      <td>finance</td>
+      <td>12</td>
+      <td>384</td>
+      <td>1.699</td>
+      <td>0.8152</td>
+      <td>1.303</td>
+      <td>1.428</td>
+      <td>1.71</td>
+      <td>0.2308</td>
+      <td>0.0004656</td>
+      <td>0.003568</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>tabpfn_ts_20260528_155349</td>
+      <td>seasonal_naive</td>
+      <td>stock_provided</td>
+      <td>finance</td>
+      <td>12</td>
+      <td>384</td>
+      <td>0.1452</td>
+      <td>0.2786</td>
+      <td>0.381</td>
+      <td>0.7645</td>
+      <td>0.5844</td>
+      <td>0.07886</td>
+      <td>0.0003192</td>
+      <td>0.003414</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>tabpfn_ts_20260528_155349</td>
+      <td>moving_average</td>
+      <td>stock_provided</td>
+      <td>finance</td>
+      <td>12</td>
+      <td>384</td>
+      <td>0.07349</td>
+      <td>0.1996</td>
+      <td>0.2711</td>
+      <td>0.5478</td>
+      <td>0.4186</td>
+      <td>0.05649</td>
+      <td>0.0003056</td>
+      <td>0.00346</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>tabpfn_ts_20260528_155349</td>
+      <td>linear_trend</td>
+      <td>stock_provided</td>
+      <td>finance</td>
+      <td>12</td>
+      <td>384</td>
+      <td>3.482</td>
+      <td>1.603</td>
+      <td>1.866</td>
+      <td>3.43</td>
+      <td>3.362</td>
+      <td>0.4536</td>
+      <td>0.0002994</td>
+      <td>0.003857</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>tabpfn_ts_20260528_155349</td>
+      <td>ridge_ar</td>
+      <td>stock_provided</td>
+      <td>finance</td>
+      <td>12</td>
+      <td>384</td>
+      <td>0.0197</td>
+      <td>0.09908</td>
+      <td>0.1404</td>
+      <td>0.2633</td>
+      <td>0.2078</td>
+      <td>0.02805</td>
+      <td>0.03335</td>
+      <td>0.009251</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>tabpfn_ts_20260528_155349</td>
+      <td>hist_gradient_boosting_ar</td>
+      <td>stock_provided</td>
+      <td>finance</td>
+      <td>12</td>
+      <td>384</td>
+      <td>0.07328</td>
+      <td>0.1785</td>
+      <td>0.2707</td>
+      <td>0.4137</td>
+      <td>0.3745</td>
+      <td>0.05054</td>
+      <td>0.7293</td>
+      <td>0.1179</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>tabpfn_ts_20260528_155349</td>
+      <td>lightgbm_ar</td>
+      <td>stock_provided</td>
+      <td>finance</td>
+      <td>12</td>
+      <td>384</td>
+      <td>0.1128</td>
+      <td>0.2446</td>
+      <td>0.3359</td>
+      <td>0.4961</td>
+      <td>0.5131</td>
+      <td>0.06924</td>
+      <td>0.4827</td>
+      <td>0.02184</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>tabpfn_ts_20260528_155349</td>
+      <td>xgboost_ar</td>
+      <td>stock_provided</td>
+      <td>finance</td>
+      <td>12</td>
+      <td>384</td>
+      <td>0.06731</td>
+      <td>0.1901</td>
+      <td>0.2594</td>
+      <td>0.4101</td>
+      <td>0.3988</td>
+      <td>0.05382</td>
+      <td>0.2326</td>
+      <td>0.0269</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>tabpfn_ts_20260528_155349</td>
+      <td>tabpfn_ts</td>
+      <td>stock_provided</td>
+      <td>finance</td>
+      <td>12</td>
+      <td>384</td>
+      <td>0.0728</td>
+      <td>0.2157</td>
+      <td>0.2698</td>
+      <td>0.4308</td>
+      <td>0.4524</td>
+      <td>0.06104</td>
+      <td>0</td>
+      <td>2.176</td>
+      <td>0</td>
+    </tr>
+  </tbody>
+</table></div></details>
+      <br/>
+      <div class="warning-panel"><b>Warnings / Missing Metrics</b><ul><li>未发现真实 loss/accuracy 训练日志；训练曲线仅为视觉 demo 占位，不参与实验结论。</li></ul></div>
+      <p class="hero-copy">源 run 目录：/Users/lioz/Desktop/组里/tabpfn_TS_26-5-26/tabpfn-quant/results/full_benchmark_v2_c384_h12_s3</p>
+      <p><a href="metrics_demo.json">metrics_demo.json</a> · <a href="summary.csv">summary.csv</a></p>
+    </section>
+  </main>
+</div>
+<script id="dashboard-payload" type="application/json">{"theme": "dark_premium", "primaryMetric": "smape", "metrics": [{"run_id": "tabpfn_ts_20260528_155349", "model": "dummy_mean", "dataset": "synthetic_energy", "domain": "energy", "horizon": 12, "context_length": 384, "mse": 1.1331178515067633, "mae": 0.7925126929805769, "rmse": 1.0644800850681817, "smape": 5.657570203308168, "wape": 5.625624214156604, "mase": 1.749702110796712, "train_time_s": 0.0004679849371314, "inference_time_s": 0.0037215410266071, "gpu_memory_mb": 0.0}, {"run_id": "tabpfn_ts_20260528_155349", "model": "seasonal_naive", "dataset": "synthetic_energy", "domain": "energy", "horizon": 12, "context_length": 384, "mse": 11.038449177454993, "mae": 2.964897546968818, "rmse": 3.322416165602225, "smape": 19.108507381050295, "wape": 21.046223714085148, "mase": 6.545873072034792, "train_time_s": 0.0003121078480035, "inference_time_s": 0.0033479859121143, "gpu_memory_mb": 0.0}, {"run_id": "tabpfn_ts_20260528_155349", "model": "moving_average", "dataset": "synthetic_energy", "domain": "energy", "horizon": 12, "context_length": 384, "mse": 2.088354574288218, "mae": 1.2641154401510788, "rmse": 1.445114035046445, "smape": 8.755985083225644, "wape": 8.97328016647606, "mase": 2.7909022448644434, "train_time_s": 0.0002904371358454, "inference_time_s": 0.0033970670774579, "gpu_memory_mb": 0.0}, {"run_id": "tabpfn_ts_20260528_155349", "model": "linear_trend", "dataset": "synthetic_energy", "domain": "energy", "horizon": 12, "context_length": 384, "mse": 3.3993904634473417, "mae": 1.6668891297030433, "rmse": 1.8437436002457992, "smape": 11.34435396930759, "wape": 11.832355410112894, "mase": 3.680142229314413, "train_time_s": 0.0003322220873087, "inference_time_s": 0.0037831859663128, "gpu_memory_mb": 0.0}, {"run_id": "tabpfn_ts_20260528_155349", "model": "ridge_ar", "dataset": "synthetic_energy", "domain": "energy", "horizon": 12, "context_length": 384, "mse": 0.0023649655051243, "mae": 0.0352445838526806, "rmse": 0.0486309110044662, "smape": 0.2465091753426641, "wape": 0.2501824716444921, "mase": 0.0778126625698075, "train_time_s": 0.0199631690047681, "inference_time_s": 0.0092368919868022, "gpu_memory_mb": 0.0}, {"run_id": "tabpfn_ts_20260528_155349", "model": "hist_gradient_boosting_ar", "dataset": "synthetic_energy", "domain": "energy", "horizon": 12, "context_length": 384, "mse": 0.0006871079479269, "mae": 0.0228011426374862, "rmse": 0.0262127439984247, "smape": 0.1609705655560655, "wape": 0.1618531302627666, "mase": 0.0503401494446025, "train_time_s": 0.6200447778683156, "inference_time_s": 0.1476612980477512, "gpu_memory_mb": 0.0}, {"run_id": "tabpfn_ts_20260528_155349", "model": "lightgbm_ar", "dataset": "synthetic_energy", "domain": "energy", "horizon": 12, "context_length": 384, "mse": 0.0026089179201843, "mae": 0.0447227470170057, "rmse": 0.051077567680777, "smape": 0.3248464272047632, "wape": 0.3174628883182235, "mase": 0.0987384625500251, "train_time_s": 0.5037098419852555, "inference_time_s": 0.0258833400439471, "gpu_memory_mb": 0.0}, {"run_id": "tabpfn_ts_20260528_155349", "model": "xgboost_ar", "dataset": "synthetic_energy", "domain": "energy", "horizon": 12, "context_length": 384, "mse": 0.0093341239299862, "mae": 0.0822139190963054, "rmse": 0.0966132699476951, "smape": 0.5973416485307993, "wape": 0.5835926895624155, "mase": 0.1815111215931038, "train_time_s": 0.2531082790810615, "inference_time_s": 0.0239524729549884, "gpu_memory_mb": 0.0}, {"run_id": "tabpfn_ts_20260528_155349", "model": "tabpfn_ts", "dataset": "synthetic_energy", "domain": "energy", "horizon": 12, "context_length": 384, "mse": 0.0019624260792699, "mae": 0.0352048229497954, "rmse": 0.0442992785411898, "smape": 0.2586264167369527, "wape": 0.2499002302368411, "mase": 0.0777248788203209, "train_time_s": 0.0, "inference_time_s": 3.805744230048731, "gpu_memory_mb": 0.0}, {"run_id": "tabpfn_ts_20260528_155349", "model": "dummy_mean", "dataset": "synthetic_traffic", "domain": "traffic", "horizon": 12, "context_length": 384, "mse": 22.79934438175532, "mae": 4.250394858438333, "rmse": 4.7748659019657635, "smape": 14.585196905789354, "wape": 15.270375654348753, "mase": 2.9850728531417743, "train_time_s": 0.0007399502210319, "inference_time_s": 0.0045632389374077, "gpu_memory_mb": 0.0}, {"run_id": "tabpfn_ts_20260528_155349", "model": "seasonal_naive", "dataset": "synthetic_traffic", "domain": "traffic", "horizon": 12, "context_length": 384, "mse": 145.4512010310537, "mae": 10.933688035204916, "rmse": 12.060315129840252, "smape": 32.87926190743764, "wape": 39.28141482045314, "mase": 7.678781954531847, "train_time_s": 0.0004032328724861, "inference_time_s": 0.0045869729947298, "gpu_memory_mb": 0.0}, {"run_id": "tabpfn_ts_20260528_155349", "model": "moving_average", "dataset": "synthetic_traffic", "domain": "traffic", "horizon": 12, "context_length": 384, "mse": 42.8743969998009, "mae": 6.005069414710101, "rmse": 6.547854381383332, "smape": 19.87172118503541, "wape": 21.574387520964457, "mase": 4.217389275138838, "train_time_s": 0.0003966158255934, "inference_time_s": 0.0048261841293424, "gpu_memory_mb": 0.0}, {"run_id": "tabpfn_ts_20260528_155349", "model": "linear_trend", "dataset": "synthetic_traffic", "domain": "traffic", "horizon": 12, "context_length": 384, "mse": 21.081476154003052, "mae": 4.066038079064969, "rmse": 4.591456866181262, "smape": 14.008179950914764, "wape": 14.608037831812537, "mase": 2.8555981959090406, "train_time_s": 0.0004018179606646, "inference_time_s": 0.0050686600152403, "gpu_memory_mb": 0.0}, {"run_id": "tabpfn_ts_20260528_155349", "model": "ridge_ar", "dataset": "synthetic_traffic", "domain": "traffic", "horizon": 12, "context_length": 384, "mse": 0.2597587115439351, "mae": 0.4675375202622815, "rmse": 0.5096652936427348, "smape": 1.7145553180552775, "wape": 1.6797200741793892, "mase": 0.3283538602982732, "train_time_s": 0.0276567440014332, "inference_time_s": 0.0127595230005681, "gpu_memory_mb": 0.0}, {"run_id": "tabpfn_ts_20260528_155349", "model": "hist_gradient_boosting_ar", "dataset": "synthetic_traffic", "domain": "traffic", "horizon": 12, "context_length": 384, "mse": 0.3730484712830849, "mae": 0.5074590280011833, "rmse": 0.6107769406936422, "smape": 1.855673433912793, "wape": 1.8231459064054811, "mase": 0.3563909281418168, "train_time_s": 0.6156776661518961, "inference_time_s": 0.1578655971679836, "gpu_memory_mb": 0.0}, {"run_id": "tabpfn_ts_20260528_155349", "model": "lightgbm_ar", "dataset": "synthetic_traffic", "domain": "traffic", "horizon": 12, "context_length": 384, "mse": 0.1752007752021963, "mae": 0.301083609899558, "rmse": 0.4185699167429454, "smape": 1.1179269081558842, "wape": 1.0817018135164285, "mase": 0.2114524745042904, "train_time_s": 0.5064474430400878, "inference_time_s": 0.0315746429841965, "gpu_memory_mb": 0.0}, {"run_id": "tabpfn_ts_20260528_155349", "model": "xgboost_ar", "dataset": "synthetic_traffic", "domain": "traffic", "horizon": 12, "context_length": 384, "mse": 0.0713602592626508, "mae": 0.1966838831462157, "rmse": 0.2671334109815745, "smape": 0.7351822465312862, "wape": 0.7066253561915568, "mase": 0.1381320417948166, "train_time_s": 0.2153502770233899, "inference_time_s": 0.0266988521907478, "gpu_memory_mb": 0.0}, {"run_id": "tabpfn_ts_20260528_155349", "model": "tabpfn_ts", "dataset": "synthetic_traffic", "domain": "traffic", "horizon": 12, "context_length": 384, "mse": 0.6306791638681727, "mae": 0.5497738481267188, "rmse": 0.7941531110989698, "smape": 1.9451647695843128, "wape": 1.9751701819337404, "mase": 0.3861088308424433, "train_time_s": 0.0, "inference_time_s": 2.356903276173398, "gpu_memory_mb": 0.0}, {"run_id": "tabpfn_ts_20260528_155349", "model": "dummy_mean", "dataset": "synthetic_weather", "domain": "weather", "horizon": 12, "context_length": 384, "mse": 28.415297082021453, "mae": 5.3148564447088225, "rmse": 5.33060006772422, "smape": 25.449753796022616, "wape": 22.57867484199317, "mase": 25.965406330069232, "train_time_s": 0.00048469286412, "inference_time_s": 0.0032091550529003, "gpu_memory_mb": 0.0}, {"run_id": "tabpfn_ts_20260528_155349", "model": "seasonal_naive", "dataset": "synthetic_weather", "domain": "weather", "horizon": 12, "context_length": 384, "mse": 0.7422038314185352, "mae": 0.7492557483882099, "rmse": 0.8615125253985197, "smape": 3.1991142987639267, "wape": 3.183002606437934, "mase": 3.660443166138201, "train_time_s": 0.0003933161497116, "inference_time_s": 0.0034023190382868, "gpu_memory_mb": 0.0}, {"run_id": "tabpfn_ts_20260528_155349", "model": "moving_average", "dataset": "synthetic_weather", "domain": "weather", "horizon": 12, "context_length": 384, "mse": 1.324910682818048, "mae": 1.0757846571965493, "rmse": 1.1510476457636531, "smape": 4.663687628220516, "wape": 4.570168964587472, "mase": 5.2556801935020045, "train_time_s": 0.0003851649817079, "inference_time_s": 0.0033192939590662, "gpu_memory_mb": 0.0}, {"run_id": "tabpfn_ts_20260528_155349", "model": "linear_trend", "dataset": "synthetic_weather", "domain": "weather", "horizon": 12, "context_length": 384, "mse": 19.03818240810461, "mae": 4.342438225112382, "rmse": 4.363276567913683, "smape": 20.316520709579336, "wape": 18.447629155414734, "mase": 21.214716549967868, "train_time_s": 0.0003830888308584, "inference_time_s": 0.0035718970466405, "gpu_memory_mb": 0.0}, {"run_id": "tabpfn_ts_20260528_155349", "model": "ridge_ar", "dataset": "synthetic_weather", "domain": "weather", "horizon": 12, "context_length": 384, "mse": 0.4796924448367194, "mae": 0.587581605497752, "rmse": 0.692598328641298, "smape": 2.481166285039325, "wape": 2.496175419164473, "mase": 2.870594022160729, "train_time_s": 0.0311812311410903, "inference_time_s": 0.0086522160563617, "gpu_memory_mb": 0.0}, {"run_id": "tabpfn_ts_20260528_155349", "model": "hist_gradient_boosting_ar", "dataset": "synthetic_weather", "domain": "weather", "horizon": 12, "context_length": 384, "mse": 5.736398800930033e-05, "mae": 0.0059511971311888, "rmse": 0.0075739017691874, "smape": 0.0253379678108938, "wape": 0.0252819895219348, "mase": 0.0290742098623376, "train_time_s": 0.714930399088189, "inference_time_s": 0.1055061840452253, "gpu_memory_mb": 0.0}, {"run_id": "tabpfn_ts_20260528_155349", "model": "lightgbm_ar", "dataset": "synthetic_weather", "domain": "weather", "horizon": 12, "context_length": 384, "mse": 0.0023605109338364, "mae": 0.0340052927997097, "rmse": 0.0485850896246618, "smape": 0.1453692624000574, "wape": 0.1444619355233556, "mase": 0.1661307796556703, "train_time_s": 0.5129549179691821, "inference_time_s": 0.0209733240772038, "gpu_memory_mb": 0.0}, {"run_id": "tabpfn_ts_20260528_155349", "model": "xgboost_ar", "dataset": "synthetic_weather", "domain": "weather", "horizon": 12, "context_length": 384, "mse": 0.0065248888947743, "mae": 0.0654454490843798, "rmse": 0.080776784380008, "smape": 0.2822221146006271, "wape": 0.2780266090226239, "mase": 0.3197297416417574, "train_time_s": 0.2265455520246178, "inference_time_s": 0.0226574160624295, "gpu_memory_mb": 0.0}, {"run_id": "tabpfn_ts_20260528_155349", "model": "tabpfn_ts", "dataset": "synthetic_weather", "domain": "weather", "horizon": 12, "context_length": 384, "mse": 0.2528397433141153, "mae": 0.3910658792573374, "rmse": 0.5028317246496241, "smape": 1.662150101008966, "wape": 1.6613335508506522, "mase": 1.9105284521563144, "train_time_s": 0.0, "inference_time_s": 1.563137755030766, "gpu_memory_mb": 0.0}, {"run_id": "tabpfn_ts_20260528_155349", "model": "dummy_mean", "dataset": "synthetic_exchange", "domain": "economics", "horizon": 12, "context_length": 384, "mse": 3.903900383405966, "mae": 1.9749909000985837, "rmse": 1.9758290369882627, "smape": 47.33024155618807, "wape": 38.276591604823466, "mase": 44.84769148495521, "train_time_s": 0.0005170090589672, "inference_time_s": 0.0044449800625443, "gpu_memory_mb": 0.0}, {"run_id": "tabpfn_ts_20260528_155349", "model": "seasonal_naive", "dataset": "synthetic_exchange", "domain": "economics", "horizon": 12, "context_length": 384, "mse": 0.0239598301417748, "mae": 0.1258775468571698, "rmse": 0.1547896318936603, "smape": 2.4728217525654705, "wape": 2.4395876725449286, "mase": 2.858401720256814, "train_time_s": 0.0004285878967493, "inference_time_s": 0.0046362909488379, "gpu_memory_mb": 0.0}, {"run_id": "tabpfn_ts_20260528_155349", "model": "moving_average", "dataset": "synthetic_exchange", "domain": "economics", "horizon": 12, "context_length": 384, "mse": 0.0338620995076926, "mae": 0.1747877901168784, "rmse": 0.1840165740027039, "smape": 3.439619699136629, "wape": 3.38749958770919, "mase": 3.9690455718593864, "train_time_s": 0.0004115949850529, "inference_time_s": 0.0047291989903897, "gpu_memory_mb": 0.0}, {"run_id": "tabpfn_ts_20260528_155349", "model": "linear_trend", "dataset": "synthetic_exchange", "domain": "economics", "horizon": 12, "context_length": 384, "mse": 0.0034085223708017, "mae": 0.0532222370439414, "rmse": 0.0583825519380729, "smape": 1.0309575746605195, "wape": 1.031481123039285, "mase": 1.2085597290431562, "train_time_s": 0.0004308097995817, "inference_time_s": 0.0051595328841358, "gpu_memory_mb": 0.0}, {"run_id": "tabpfn_ts_20260528_155349", "model": "ridge_ar", "dataset": "synthetic_exchange", "domain": "economics", "horizon": 12, "context_length": 384, "mse": 832421011116.6068, "mae": 287393.6053153602, "rmse": 912371.0928764716, "smape": 105.09872280612409, "wape": 5569872.580144428, "mase": 6526075.510165082, "train_time_s": 0.0464019868522882, "inference_time_s": 0.0125724840909242, "gpu_memory_mb": 0.0}, {"run_id": "tabpfn_ts_20260528_155349", "model": "hist_gradient_boosting_ar", "dataset": "synthetic_exchange", "domain": "economics", "horizon": 12, "context_length": 384, "mse": 0.00564893699711, "mae": 0.063276883629233, "rmse": 0.0751594105692032, "smape": 1.2283242890755657, "wape": 1.226346629030642, "mase": 1.43687859776549, "train_time_s": 0.9044824428856372, "inference_time_s": 0.1451845150440931, "gpu_memory_mb": 0.0}, {"run_id": "tabpfn_ts_20260528_155349", "model": "lightgbm_ar", "dataset": "synthetic_exchange", "domain": "economics", "horizon": 12, "context_length": 384, "mse": 0.0044543653547797, "mae": 0.0555130259831639, "rmse": 0.066741032017641, "smape": 1.0766733843321128, "wape": 1.0758780833873498, "mase": 1.260578498141418, "train_time_s": 0.4875168839935213, "inference_time_s": 0.0210984169971197, "gpu_memory_mb": 0.0}, {"run_id": "tabpfn_ts_20260528_155349", "model": "xgboost_ar", "dataset": "synthetic_exchange", "domain": "economics", "horizon": 12, "context_length": 384, "mse": 0.0070225230472843, "mae": 0.0711198263359353, "rmse": 0.0838004955073914, "smape": 1.3821888717566884, "wape": 1.3783478939222873, "mase": 1.6149745448540602, "train_time_s": 0.2466873822268098, "inference_time_s": 0.0245976978912949, "gpu_memory_mb": 0.0}, {"run_id": "tabpfn_ts_20260528_155349", "model": "tabpfn_ts", "dataset": "synthetic_exchange", "domain": "economics", "horizon": 12, "context_length": 384, "mse": 0.0014672753265901, "mae": 0.0306651566076959, "rmse": 0.0383050300429344, "smape": 0.5933444312866364, "wape": 0.5943104223478406, "mase": 0.6963381364497101, "train_time_s": 0.0, "inference_time_s": 1.794640762032941, "gpu_memory_mb": 0.0}, {"run_id": "tabpfn_ts_20260528_155349", "model": "dummy_mean", "dataset": "stock_provided", "domain": "finance", "horizon": 12, "context_length": 384, "mse": 1.698892848355266, "mae": 0.815246270279639, "rmse": 1.3034158386160826, "smape": 1.4279587676740666, "wape": 1.7099979327186772, "mase": 0.2307611966728432, "train_time_s": 0.0004655870143324, "inference_time_s": 0.0035684900358319, "gpu_memory_mb": 0.0}, {"run_id": "tabpfn_ts_20260528_155349", "model": "seasonal_naive", "dataset": "stock_provided", "domain": "finance", "horizon": 12, "context_length": 384, "mse": 0.1451638574537248, "mae": 0.2786112229029343, "rmse": 0.3810037499208175, "smape": 0.7644665601387036, "wape": 0.584393492573503, "mase": 0.0788628682490166, "train_time_s": 0.000319198006764, "inference_time_s": 0.0034138148184865, "gpu_memory_mb": 0.0}, {"run_id": "tabpfn_ts_20260528_155349", "model": "moving_average", "dataset": "stock_provided", "domain": "finance", "horizon": 12, "context_length": 384, "mse": 0.0734851668462691, "mae": 0.199583768844605, "rmse": 0.2710814763982761, "smape": 0.5477631495253235, "wape": 0.4186315774390618, "mase": 0.0564935909725283, "train_time_s": 0.000305620022118, "inference_time_s": 0.0034595790784806, "gpu_memory_mb": 0.0}, {"run_id": "tabpfn_ts_20260528_155349", "model": "linear_trend", "dataset": "stock_provided", "domain": "finance", "horizon": 12, "context_length": 384, "mse": 3.4820990781694365, "mae": 1.6026522033551929, "rmse": 1.8660383378080516, "smape": 3.429630370410186, "wape": 3.361600113379701, "mase": 0.4536419898857767, "train_time_s": 0.0002994141541421, "inference_time_s": 0.003857472911477, "gpu_memory_mb": 0.0}, {"run_id": "tabpfn_ts_20260528_155349", "model": "ridge_ar", "dataset": "stock_provided", "domain": "finance", "horizon": 12, "context_length": 384, "mse": 0.0197021771267514, "mae": 0.0990793228676596, "rmse": 0.1403644439548402, "smape": 0.2633157709968578, "wape": 0.207821174356001, "mase": 0.0280450999213202, "train_time_s": 0.0333506448660045, "inference_time_s": 0.0092511130496859, "gpu_memory_mb": 0.0}, {"run_id": "tabpfn_ts_20260528_155349", "model": "hist_gradient_boosting_ar", "dataset": "stock_provided", "domain": "finance", "horizon": 12, "context_length": 384, "mse": 0.0732790164120013, "mae": 0.1785379591247715, "rmse": 0.2707009723144735, "smape": 0.4136759498431951, "wape": 0.3744875041384118, "mase": 0.0505364263549804, "train_time_s": 0.729253927944228, "inference_time_s": 0.117928439984098, "gpu_memory_mb": 0.0}, {"run_id": "tabpfn_ts_20260528_155349", "model": "lightgbm_ar", "dataset": "stock_provided", "domain": "finance", "horizon": 12, "context_length": 384, "mse": 0.1128257862271499, "mae": 0.2446050903781427, "rmse": 0.3358954989682802, "smape": 0.4960812311776501, "wape": 0.5130648420330907, "mase": 0.0692371930123247, "train_time_s": 0.4827497589867562, "inference_time_s": 0.021835460094735, "gpu_memory_mb": 0.0}, {"run_id": "tabpfn_ts_20260528_155349", "model": "xgboost_ar", "dataset": "stock_provided", "domain": "finance", "horizon": 12, "context_length": 384, "mse": 0.0673139080959004, "mae": 0.1901400005077917, "rmse": 0.2594492399216087, "smape": 0.4100500925118214, "wape": 0.3988230546383557, "mase": 0.05382046585445, "train_time_s": 0.2325750279705971, "inference_time_s": 0.026899788994342, "gpu_memory_mb": 0.0}, {"run_id": "tabpfn_ts_20260528_155349", "model": "tabpfn_ts", "dataset": "stock_provided", "domain": "finance", "horizon": 12, "context_length": 384, "mse": 0.0727991480402908, "mae": 0.2156602276696101, "rmse": 0.2698131724736412, "smape": 0.4308383901571913, "wape": 0.4523523221494496, "mase": 0.0610441458317947, "train_time_s": 0.0, "inference_time_s": 2.176313095027581, "gpu_memory_mb": 0.0}], "comparison": [{"baseline": "pilot_baseline", "metric": "smape", "current_model": "lightgbm_ar", "current_value": 0.6321794426540934, "baseline_model": "ridge_ar", "baseline_value": 5.544826114617382, "absolute_difference": 4.912646671963288, "relative_improvement_pct": 88.59875080685525}, {"baseline": "pilot_baseline", "metric": "smape", "current_model": "lightgbm_ar", "current_value": 0.6321794426540934, "baseline_model": "ridge_ar", "baseline_value": 5.544826114617382, "absolute_difference": 4.912646671963288, "relative_improvement_pct": 88.59875080685525}]}</script>
+<script>
+const payload = JSON.parse(document.getElementById("dashboard-payload").textContent);
+const palette = ["#7dd3fc", "#f472b6", "#34d399", "#fbbf24", "#a78bfa", "#fb7185", "#2dd4bf", "#c084fc"];
+const lowerIsBetter = metric => ["loss","mse","mae","rmse","smape","wape","mase","runtime","train_time_s","inference_time_s","gpu_memory_mb"].includes(String(metric).toLowerCase());
+function tip() {
+  let node = document.querySelector(".tooltip");
+  if (!node) { node = document.createElement("div"); node.className = "tooltip"; document.body.appendChild(node); }
+  return node;
+}
+function showTip(event, html) {
+  const node = tip();
+  node.innerHTML = html;
+  node.style.left = `${event.clientX + 14}px`;
+  node.style.top = `${event.clientY + 14}px`;
+  node.classList.add("show");
+}
+function hideTip() { tip().classList.remove("show"); }
+document.querySelectorAll(".tab-btn").forEach(btn => {
+  btn.addEventListener("click", () => {
+    document.querySelectorAll(".tab-btn").forEach(x => x.classList.remove("active"));
+    document.querySelectorAll(".tab-pane").forEach(x => x.classList.remove("active"));
+    btn.classList.add("active");
+    document.getElementById(btn.dataset.tab).classList.add("active");
+    drawMiniRanking();
+  });
+});
+document.querySelectorAll(".data-table th").forEach(th => {
+  th.addEventListener("click", () => {
+    const table = th.closest("table");
+    const tbody = table.querySelector("tbody");
+    const index = Array.from(th.parentElement.children).indexOf(th);
+    const asc = th.dataset.asc !== "true";
+    th.dataset.asc = String(asc);
+    Array.from(tbody.querySelectorAll("tr")).sort((a,b) => {
+      const av = a.children[index].textContent.trim();
+      const bv = b.children[index].textContent.trim();
+      const an = Number(av), bn = Number(bv);
+      const cmp = Number.isFinite(an) && Number.isFinite(bn) ? an - bn : av.localeCompare(bv);
+      return asc ? cmp : -cmp;
+    }).forEach(row => tbody.appendChild(row));
+  });
+});
+const filter = document.getElementById("table-filter");
+if (filter) filter.addEventListener("input", () => {
+  const q = filter.value.toLowerCase();
+  document.querySelectorAll("#metrics-table tbody tr").forEach(row => row.style.display = row.textContent.toLowerCase().includes(q) ? "" : "none");
+});
+document.querySelectorAll("[data-count]").forEach(node => {
+  const target = Number(node.dataset.count);
+  if (!Number.isFinite(target)) return;
+  const end = target;
+  const start = performance.now();
+  const raw = node.textContent;
+  function step(now) {
+    const t = Math.min(1, (now - start) / 780);
+    node.textContent = (end * (1 - Math.pow(1 - t, 3))).toPrecision(4);
+    if (t < 1) requestAnimationFrame(step); else node.textContent = raw;
+  }
+  requestAnimationFrame(step);
+});
+const metrics = payload.metrics || [];
+const metricSelect = document.getElementById("metric-select");
+const datasetSelect = document.getElementById("dataset-select");
+const metricCols = ["smape","mae","rmse","wape","mase","train_time_s","inference_time_s"].filter(col => metrics.some(row => Number.isFinite(Number(row[col]))));
+const datasets = [...new Set(metrics.map(row => row.dataset).filter(Boolean))].sort();
+if (metricSelect) metricSelect.innerHTML = metricCols.map(m => `<option value="${m}">${m.toUpperCase()}</option>`).join("");
+if (datasetSelect) datasetSelect.innerHTML = datasets.map(d => `<option value="${d}">${d}</option>`).join("");
+if (metricSelect) metricSelect.value = payload.primaryMetric;
+function svgEl(name, attrs = {}, text = "") {
+  const node = document.createElementNS("http://www.w3.org/2000/svg", name);
+  Object.entries(attrs).forEach(([k,v]) => node.setAttribute(k,v));
+  if (text) node.textContent = text;
+  return node;
+}
+function drawMiniRanking() {
+  const svg = document.getElementById("mini-ranking");
+  if (!svg) return;
+  while (svg.firstChild) svg.removeChild(svg.firstChild);
+  const metric = metricSelect.value || payload.primaryMetric;
+  const dataset = datasetSelect.value || datasets[0];
+  const rows = metrics.filter(row => row.dataset === dataset && Number.isFinite(Number(row[metric])));
+  const grouped = new Map();
+  rows.forEach(row => {
+    if (!grouped.has(row.model)) grouped.set(row.model, []);
+    grouped.get(row.model).push(Number(row[metric]));
+  });
+  const values = [...grouped.entries()].map(([model, vals]) => [model, vals.reduce((a,b)=>a+b,0)/vals.length]).sort((a,b) => lowerIsBetter(metric) ? a[1]-b[1] : b[1]-a[1]);
+  svg.append(svgEl("text", {x: 24, y: 32, class: "svg-title"}, `${dataset} · ${metric.toUpperCase()} ranking`));
+  if (!values.length) {
+    svg.append(svgEl("text", {x: 24, y: 72, class: "svg-axis"}, "当前筛选下没有数据。"));
+    return;
+  }
+  const max = Math.max(...values.map(x => x[1]), 1);
+  values.forEach(([model, value], idx) => {
+    const y = 62 + idx * 25;
+    const width = Math.max(4, value / max * 640);
+    const color = palette[idx % palette.length];
+    svg.append(svgEl("text", {x: 24, y: y + 15, class: "svg-axis"}, `${idx + 1}. ${model}`));
+    const bar = svgEl("rect", {x: 240, y, width, height: 17, rx: 9, fill: color, opacity: .88});
+    bar.addEventListener("mousemove", e => showTip(e, `<b>${model}</b><br>${metric.toUpperCase()}: ${value.toFixed(6)}`));
+    bar.addEventListener("mouseleave", hideTip);
+    svg.append(bar);
+    svg.append(svgEl("text", {x: 248 + width, y: y + 14, class: "svg-label"}, value.toPrecision(4)));
+  });
+}
+if (metricSelect) metricSelect.addEventListener("change", drawMiniRanking);
+if (datasetSelect) datasetSelect.addEventListener("change", drawMiniRanking);
+drawMiniRanking();
+</script>
+</body>
+</html>

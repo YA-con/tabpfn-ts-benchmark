@@ -14,6 +14,13 @@
       "source": "community",
       "version": "1.0.11",
       "installedAt": "2026-05-28T12:31:37Z"
+    },
+    "data-visualization-2": {
+      "name": "Data Visualization",
+      "zip_url": "https://api.skillhub.cn/api/v1/download?slug=data-visualization-2",
+      "source": "community",
+      "version": "0.1.5",
+      "installedAt": "2026-05-28T12:44:15Z"
     }
   }
 }

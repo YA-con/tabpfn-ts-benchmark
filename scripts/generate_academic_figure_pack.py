@@ -104,12 +104,20 @@ def _explain_html(*, watch: str, finding: str, caveat: str) -> str:
     )
 
 
+def _run_label_from_glob(results_glob: str) -> str:
+    marker = "results/"
+    if marker in results_glob:
+        return results_glob.split(marker, 1)[1].split("/")[0].replace("*", "matrix")
+    return Path(results_glob).parts[1] if len(Path(results_glob).parts) > 1 else "benchmark"
+
+
 def build_pack(results_glob: str, out_dir: Path) -> Path:
     metrics = _load_metrics(results_glob)
     out_dir.mkdir(parents=True, exist_ok=True)
     data_dir = out_dir / "data"
     assets = out_dir / "assets"
     assets.mkdir(parents=True, exist_ok=True)
+    run_label = _run_label_from_glob(results_glob)
 
     unit = (
         metrics.groupby(["task", "matrix_run", "scenario", "context", "horizon", "dataset", "model"], as_index=False)
@@ -122,6 +130,7 @@ def build_pack(results_glob: str, out_dir: Path) -> Path:
         )
     )
     unit["rank"] = unit.groupby("task")["smape"].rank(method="min", ascending=True).astype(int)
+    task_count = int(unit["task"].nunique())
     summary = (
         unit.groupby("model")
         .agg(
@@ -374,12 +383,12 @@ def build_pack(results_glob: str, out_dir: Path) -> Path:
         {
             "title": "Task rank boxplot",
             "file": fig_box,
-            "caption": "每个模型在 25 个 task 上的排名分布。",
+            "caption": f"每个模型在 {task_count} 个 task 上的排名分布。",
             "explain": _explain_html(
                 watch="箱体越靠低 rank 且越窄，表示模型越稳定。",
                 finding=(
                     f"{SHORT_NAMES.get(order[0], order[0])} 的平均排名为 "
-                    f"{summary.iloc[0].avg_rank:.2f}，wins={int(summary.iloc[0].wins)}/25。"
+                    f"{summary.iloc[0].avg_rank:.2f}，wins={int(summary.iloc[0].wins)}/{task_count}。"
                 ),
                 caveat="箱线图看的是排名分布，不反映具体 SMAPE 差距大小。",
             ),
@@ -391,7 +400,7 @@ def build_pack(results_glob: str, out_dir: Path) -> Path:
             "explain": _explain_html(
                 watch="看 Top 模型的误差分布形态，是否有长尾或不稳定 task。",
                 finding="TabPFN-TS 整体均值最低，但分布宽度提示仍存在失败或退步场景。",
-                caveat="小提琴图基于 25 个 task，样本量有限，适合做诊断而非最终显著性结论。",
+                caveat=f"小提琴图基于 {task_count} 个 task，样本量有限，适合做诊断而非最终显著性结论。",
             ),
         },
         {
@@ -420,7 +429,7 @@ def build_pack(results_glob: str, out_dir: Path) -> Path:
         for item in figures
     )
     table_rows = "\n".join(
-        f"<tr><td>{SHORT_NAMES.get(model, model)}</td><td>{model}</td><td>{row.avg_rank:.3f}</td><td>{row.mean_smape:.4f}</td><td>{int(row.wins)}</td><td>{int(row.top3)}/25</td></tr>"
+        f"<tr><td>{SHORT_NAMES.get(model, model)}</td><td>{model}</td><td>{row.avg_rank:.3f}</td><td>{row.mean_smape:.4f}</td><td>{int(row.wins)}</td><td>{int(row.top3)}/{task_count}</td></tr>"
         for model, row in summary.iterrows()
     )
     html = f"""<!doctype html>
@@ -428,7 +437,7 @@ def build_pack(results_glob: str, out_dir: Path) -> Path:
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>Academic Figure Pack · Full Benchmark v1</title>
+<title>Academic Figure Pack · {run_label}</title>
 <style>
 body {{ margin:0; background:#f6f8fb; color:#0f172a; font-family:Inter,-apple-system,BlinkMacSystemFont,"PingFang SC",sans-serif; }}
 main {{ max-width:1440px; margin:0 auto; padding:34px; }}
@@ -459,7 +468,7 @@ th {{ color:#64748b; }}
 <main>
 <header>
 <h1>Academic Figure Pack</h1>
-<p class="sub">使用 SkillHub academic-figures 生成的出版风格图集。所有图基于 full_benchmark_v1 真实 metrics；输出同时包含 SVG 和 300DPI PNG。</p>
+<p class="sub">使用 SkillHub academic-figures 生成的出版风格图集。所有图基于 {run_label} 真实 metrics；输出同时包含 SVG 和 300DPI PNG。标题、注释和摘要全部由当前结果自动计算。</p>
 </header>
 <div class="grid">{figure_html}</div>
 <section>
