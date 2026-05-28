@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Academic Figure Pack · Full Benchmark v1</title>
+<style>
+body { margin:0; background:#f6f8fb; color:#0f172a; font-family:Inter,-apple-system,BlinkMacSystemFont,"PingFang SC",sans-serif; }
+main { max-width:1440px; margin:0 auto; padding:34px; }
+header { padding:28px 0 22px; border-bottom:1px solid #dbe4ef; }
+h1 { margin:0 0 10px; font-size:44px; letter-spacing:0; }
+.sub { color:#64748b; line-height:1.7; max-width:980px; }
+.grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:22px; margin-top:24px; }
+article, section { background:#fff; border:1px solid #dbe4ef; border-radius:16px; padding:18px; box-shadow:0 14px 42px rgba(15,23,42,.055); }
+article div { display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; }
+h2 { margin:0; font-size:17px; }
+p { color:#64748b; line-height:1.6; }
+a { color:#0f766e; font-size:12px; font-weight:800; text-decoration:none; margin-left:8px; }
+img { width:100%; display:block; border-radius:10px; background:white; }
+section { margin-top:22px; }
+table { width:100%; border-collapse:collapse; font-size:13px; }
+th,td { border-bottom:1px solid #e5ebf3; padding:10px; text-align:right; }
+th:first-child,td:first-child,th:nth-child(2),td:nth-child(2) { text-align:left; }
+th { color:#64748b; }
+@media(max-width:900px) { main { padding:16px; } .grid { grid-template-columns:1fr; } h1 { font-size:32px; } }
+</style>
+</head>
+<body>
+<main>
+<header>
+<h1>Academic Figure Pack</h1>
+<p class="sub">使用 SkillHub academic-figures 生成的出版风格图集。所有图基于 full_benchmark_v1 真实 metrics；输出同时包含 SVG 和 300DPI PNG。</p>
+</header>
+<div class="grid"><article><div><h2>Mean SMAPE bar</h2><a href="assets/01_model_mean_smape_bar.svg">SVG</a><a href="assets/01_model_mean_smape_bar.png">PNG</a></div><p>带标准差的整体误差对比。</p><img src="assets/01_model_mean_smape_bar.svg" alt="Mean SMAPE bar"/></article>
+<article><div><h2>Scenario rank heatmap</h2><a href="assets/02_scenario_rank_heatmap.svg">SVG</a><a href="assets/02_scenario_rank_heatmap.png">PNG</a></div><p>不同 context/horizon 场景中的模型排名。</p><img src="assets/02_scenario_rank_heatmap.svg" alt="Scenario rank heatmap"/></article>
+<article><div><h2>Inference-rank scatter</h2><a href="assets/03_inference_rank_scatter.svg">SVG</a><a href="assets/03_inference_rank_scatter.png">PNG</a></div><p>推理成本与平均排名的关系。</p><img src="assets/03_inference_rank_scatter.svg" alt="Inference-rank scatter"/></article>
+<article><div><h2>Rank trajectory line</h2><a href="assets/04_rank_trajectory_line.svg">SVG</a><a href="assets/04_rank_trajectory_line.png">PNG</a></div><p>Top 模型排名随实验场景变化。</p><img src="assets/04_rank_trajectory_line.svg" alt="Rank trajectory line"/></article>
+<article><div><h2>Task rank boxplot</h2><a href="assets/05_task_rank_boxplot.svg">SVG</a><a href="assets/05_task_rank_boxplot.png">PNG</a></div><p>每个模型在 25 个 task 上的排名分布。</p><img src="assets/05_task_rank_boxplot.svg" alt="Task rank boxplot"/></article>
+<article><div><h2>Top model SMAPE violin</h2><a href="assets/06_top_model_smape_violin.svg">SVG</a><a href="assets/06_top_model_smape_violin.png">PNG</a></div><p>Top 6 模型 task-level SMAPE 分布。</p><img src="assets/06_top_model_smape_violin.svg" alt="Top model SMAPE violin"/></article>
+<article><div><h2>Average rank forest</h2><a href="assets/07_average_rank_forest.svg">SVG</a><a href="assets/07_average_rank_forest.png">PNG</a></div><p>平均排名及 bootstrap 95% CI。</p><img src="assets/07_average_rank_forest.svg" alt="Average rank forest"/></article></div>
+<section>
+<h2>Model summary</h2>
+<table><thead><tr><th>Display</th><th>Raw model</th><th>Avg rank</th><th>Mean SMAPE</th><th>Wins</th><th>Top-3</th></tr></thead><tbody><tr><td>TabPFN-TS</td><td>tabpfn_ts</td><td>2.440</td><td>1.4389</td><td>7</td><td>19/25</td></tr>
+<tr><td>LightGBM</td><td>lightgbm_ar</td><td>3.280</td><td>2.3852</td><td>4</td><td>13/25</td></tr>
+<tr><td>Ridge-AR</td><td>ridge_ar</td><td>3.400</td><td>3.5997</td><td>9</td><td>14/25</td></tr>
+<tr><td>HistGBR</td><td>hist_gradient_boosting_ar</td><td>3.920</td><td>2.6354</td><td>2</td><td>9/25</td></tr>
+<tr><td>XGBoost</td><td>xgboost_ar</td><td>4.040</td><td>2.3881</td><td>2</td><td>11/25</td></tr>
+<tr><td>Trend</td><td>linear_trend</td><td>6.480</td><td>11.2109</td><td>1</td><td>6/25</td></tr>
+<tr><td>MovingAvg</td><td>moving_average</td><td>6.680</td><td>8.1313</td><td>0</td><td>0/25</td></tr>
+<tr><td>Seasonal</td><td>seasonal_naive</td><td>6.960</td><td>9.0656</td><td>0</td><td>2/25</td></tr>
+<tr><td>Mean</td><td>dummy_mean</td><td>7.800</td><td>13.2761</td><td>0</td><td>1/25</td></tr></tbody></table>
+</section>
+</main>
+</body>
+</html>
