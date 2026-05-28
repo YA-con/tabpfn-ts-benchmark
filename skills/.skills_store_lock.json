@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "skills": {
+    "academic-figures": {
+      "name": "Academic Figures 学术配图",
+      "zip_url": "https://api.skillhub.cn/api/v1/download?slug=academic-figures",
+      "source": "community",
+      "version": "1.0.1",
+      "installedAt": "2026-05-28T12:08:48Z"
+    }
+  }
+}
