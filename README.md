@@ -49,6 +49,22 @@ The report writes `index.html`, `metrics.json`, `summary.csv`, and matplotlib
 SVG figures under `assets/`. Missing metrics or logs are shown as N/A rather
 than being fabricated.
 
+For a presentation-grade dashboard demo with premium dark and clean themes:
+
+```bash
+python scripts/generate_fancy_demo_report.py
+```
+
+This writes:
+
+- `reports/demo/fancy_dark/index.html`
+- `reports/demo/fancy_clean/index.html`
+- `reports/demo/fancy_v1/index.html`
+
+The fancy dashboard uses the shared design tokens in `src/reporting/style_config.py`.
+It reuses real metrics and predictions, while clearly marking the training curve
+as a demo placeholder when no real training logs are available.
+
 ## Project layout
 
 ```text
