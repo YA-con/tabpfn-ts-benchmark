@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 import json
+import math
 from pathlib import Path
+from typing import Any
 
 import pandas as pd
 
@@ -27,6 +29,23 @@ def _summary_csv(metrics: pd.DataFrame | None, primary_metric: str) -> pd.DataFr
     if primary_metric in grouped.columns:
         grouped = grouped.sort_values(primary_metric)
     return grouped
+
+
+def _json_safe(value: Any) -> Any:
+    """Convert pandas/numpy NaN values into strict JSON-compatible nulls."""
+
+    if isinstance(value, dict):
+        return {str(key): _json_safe(item) for key, item in value.items()}
+    if isinstance(value, list):
+        return [_json_safe(item) for item in value]
+    if isinstance(value, float) and (math.isnan(value) or math.isinf(value)):
+        return None
+    try:
+        if pd.isna(value):
+            return None
+    except TypeError:
+        pass
+    return value
 
 
 def generate_experiment_report(
@@ -65,7 +84,10 @@ def generate_experiment_report(
         "baseline_comparison": comparison.to_dict(orient="records"),
         "figures": figures,
     }
-    (output / "metrics.json").write_text(json.dumps(metadata, ensure_ascii=False, indent=2), encoding="utf-8")
+    (output / "metrics.json").write_text(
+        json.dumps(_json_safe(metadata), ensure_ascii=False, indent=2, allow_nan=False),
+        encoding="utf-8",
+    )
     render_html_report(
         output / "index.html",
         run_id=artifacts.run_id,

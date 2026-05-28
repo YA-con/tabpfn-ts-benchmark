@@ -28,7 +28,12 @@ def _fmt(value: object, digits: int = 4) -> str:
 def _table(df: pd.DataFrame | None, empty: str = "暂无数据") -> str:
     if df is None or df.empty:
         return f'<div class="empty">{escape(empty)}</div>'
-    return df.to_html(index=False, classes="data-table", border=0, escape=True)
+    display = df.copy()
+    numeric_cols = display.select_dtypes(include="number").columns
+    for col in numeric_cols:
+        display[col] = display[col].map(_fmt)
+    display = display.fillna("N/A")
+    return display.to_html(index=False, classes="data-table", border=0, escape=True, na_rep="N/A")
 
 
 def _metric_cards(summaries: list[MetricSummary]) -> str:
@@ -78,7 +83,9 @@ def render_html_report(
     figure_html = "".join(
         '<article class="figure-card">'
         f'<h3>{escape(fig["title"])}</h3>'
+        f'<a href="assets/{escape(fig["file"])}" class="figure-link">'
         f'<img src="assets/{escape(fig["file"])}" alt="{escape(fig["title"])}"/>'
+        "</a>"
         "</article>"
         for fig in figures
     )
@@ -122,11 +129,14 @@ h3 {{ margin: 0 0 10px; font-size: 15px; }}
 .metric-sub {{ margin-top: 6px; color: #475569; font-size: 12px; }}
 .figure-grid {{ display: grid; grid-template-columns: repeat(2, minmax(420px, 1fr)); gap: 16px; }}
 .figure-card {{ border: 1px solid #e2e8f0; border-radius: 8px; padding: 14px; background: #fbfdff; overflow-x: auto; }}
-.figure-card img {{ width: 100%; min-width: 460px; height: auto; display: block; }}
+.figure-link {{ display: block; }}
+.figure-card img {{ width: 100%; min-width: 420px; height: auto; display: block; }}
 .data-table {{ width: 100%; border-collapse: collapse; font-size: 13px; }}
 .data-table th, .data-table td {{ border-bottom: 1px solid #e2e8f0; padding: 8px 9px; text-align: right; }}
 .data-table th:first-child, .data-table td:first-child {{ text-align: left; }}
-.data-table th {{ color: #475569; position: sticky; top: 0; background: #fff; cursor: pointer; }}
+.data-table td {{ max-width: 260px; overflow-wrap: anywhere; }}
+.data-table th {{ color: #475569; position: sticky; top: 0; background: #fff; cursor: pointer; user-select: none; }}
+.data-table th::after {{ content: " ↕"; color: #94a3b8; font-weight: 400; }}
 .table-wrap {{ max-height: 460px; overflow: auto; border: 1px solid #e2e8f0; border-radius: 8px; }}
 .empty {{ padding: 14px; border: 1px dashed #cbd5e1; border-radius: 8px; color: var(--muted); background: #f8fafc; }}
 details {{ border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px 14px; background: #fbfdff; }}
@@ -138,6 +148,7 @@ pre {{ margin: 12px 0 0; white-space: pre-wrap; font-size: 12px; line-height: 1.
 @media (max-width: 980px) {{
   .hero, main {{ padding-left: 16px; padding-right: 16px; }}
   .overview, .metric-grid, .figure-grid {{ grid-template-columns: 1fr; }}
+  .figure-card img {{ min-width: 360px; }}
 }}
 </style>
 </head>
@@ -183,12 +194,14 @@ document.querySelectorAll(".data-table th").forEach((th, idx) => {{
   th.addEventListener("click", () => {{
     const table = th.closest("table");
     const tbody = table.querySelector("tbody");
+    const headers = Array.from(th.parentElement.children);
+    const colIndex = headers.indexOf(th);
     const rows = Array.from(tbody.querySelectorAll("tr"));
     const asc = th.dataset.asc !== "true";
     th.dataset.asc = String(asc);
     rows.sort((a, b) => {{
-      const av = a.children[idx].textContent.trim();
-      const bv = b.children[idx].textContent.trim();
+      const av = a.children[colIndex].textContent.trim();
+      const bv = b.children[colIndex].textContent.trim();
       const an = Number(av), bn = Number(bv);
       const cmp = Number.isFinite(an) && Number.isFinite(bn) ? an - bn : av.localeCompare(bv);
       return asc ? cmp : -cmp;
