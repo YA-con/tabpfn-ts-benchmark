@@ -1,0 +1,180 @@
+{
+  "run_id": "tabpfn_ts_20260528_112700",
+  "run_dir": "/home/wanyi/zy_test/tabpfn-ts-benchmark/results/full_benchmark_v1_c48_h12_s2",
+  "primary_metric": "smape",
+  "warnings": [],
+  "summary": [
+    {
+      "model": "tabpfn_ts",
+      "horizon": 12.0,
+      "context_length": 48.0,
+      "mse": 0.5120236488206373,
+      "mae": 0.3934571235146184,
+      "rmse": 0.4815138576842707,
+      "smape": 1.5735846162670095,
+      "wape": 1.5821060935264666,
+      "mase": 0.7940913733079235,
+      "train_time_s": 0.0,
+      "inference_time_s": 1.7555503115989268,
+      "gpu_memory_mb": 0.0
+    },
+    {
+      "model": "xgboost_ar",
+      "horizon": 12.0,
+      "context_length": 48.0,
+      "mse": 0.4015403873751538,
+      "mae": 0.4338501592502877,
+      "rmse": 0.5036673717962914,
+      "smape": 2.056634814712129,
+      "wape": 2.043146537644337,
+      "mase": 1.052107967351947,
+      "train_time_s": 0.19192431201227006,
+      "inference_time_s": 0.01863346355967218,
+      "gpu_memory_mb": 0.0
+    },
+    {
+      "model": "lightgbm_ar",
+      "horizon": 12.0,
+      "context_length": 48.0,
+      "mse": 0.628369009144405,
+      "mae": 0.4719553546408554,
+      "rmse": 0.5331658126190428,
+      "smape": 2.2150376046645213,
+      "wape": 2.1986591450244535,
+      "mase": 1.0036922803331452,
+      "train_time_s": 0.0482035654596984,
+      "inference_time_s": 0.01532014361582692,
+      "gpu_memory_mb": 0.0
+    },
+    {
+      "model": "ridge_ar",
+      "horizon": 12.0,
+      "context_length": 48.0,
+      "mse": 0.9867859978693426,
+      "mae": 0.6667024679764786,
+      "rmse": 0.7679373464552717,
+      "smape": 2.9253763078138806,
+      "wape": 2.9177402536216652,
+      "mase": 1.630683954278081,
+      "train_time_s": 0.00404421086423094,
+      "inference_time_s": 0.0067029734142124,
+      "gpu_memory_mb": 0.0
+    },
+    {
+      "model": "hist_gradient_boosting_ar",
+      "horizon": 12.0,
+      "context_length": 48.0,
+      "mse": 2.3168203625835444,
+      "mae": 0.8481972391961718,
+      "rmse": 0.9182063823889483,
+      "smape": 3.784450428094984,
+      "wape": 3.812949551429715,
+      "mase": 1.373917138968561,
+      "train_time_s": 0.05533058862201866,
+      "inference_time_s": 0.0829953650478273,
+      "gpu_memory_mb": 0.0
+    },
+    {
+      "model": "moving_average",
+      "horizon": 12.0,
+      "context_length": 48.0,
+      "mse": 9.26726011433944,
+      "mae": 1.7234098894535776,
+      "rmse": 1.8899180185816653,
+      "smape": 7.5714768087934585,
+      "wape": 7.896063456722912,
+      "mase": 3.298367792782846,
+      "train_time_s": 0.0002967676147818,
+      "inference_time_s": 0.0025603430345654,
+      "gpu_memory_mb": 0.0
+    },
+    {
+      "model": "dummy_mean",
+      "horizon": 12.0,
+      "context_length": 48.0,
+      "mse": 10.038656598034427,
+      "mae": 2.028943193265286,
+      "rmse": 2.189462121607974,
+      "smape": 9.383915779188957,
+      "wape": 9.492779767496751,
+      "mase": 5.6079608147327376,
+      "train_time_s": 0.00042192521505053995,
+      "inference_time_s": 0.0026320005767047,
+      "gpu_memory_mb": 0.0
+    },
+    {
+      "model": "seasonal_naive",
+      "horizon": 12.0,
+      "context_length": 48.0,
+      "mse": 31.470607730886588,
+      "mae": 2.99791045661455,
+      "rmse": 3.3421684687011477,
+      "smape": 11.915736126270682,
+      "wape": 13.596669161828576,
+      "mase": 4.250237790812909,
+      "train_time_s": 0.00032131839543578,
+      "inference_time_s": 0.00261483620852226,
+      "gpu_memory_mb": 0.0
+    },
+    {
+      "model": "linear_trend",
+      "horizon": 12.0,
+      "context_length": 48.0,
+      "mse": 29.81355480090245,
+      "mae": 3.289691700091781,
+      "rmse": 3.4370060918865377,
+      "smape": 13.012009344029735,
+      "wape": 14.681815154162297,
+      "mase": 5.227636494863822,
+      "train_time_s": 0.00029655001126223997,
+      "inference_time_s": 0.0028139467351138,
+      "gpu_memory_mb": 0.0
+    }
+  ],
+  "baseline_comparison": [
+    {
+      "baseline": "pilot_baseline",
+      "metric": "smape",
+      "current_model": "tabpfn_ts",
+      "current_value": 1.5735846162670095,
+      "baseline_model": "ridge_ar",
+      "baseline_value": 5.544826114617382,
+      "absolute_difference": 3.9712414983503725,
+      "relative_improvement_pct": 71.62066792106079
+    }
+  ],
+  "figures": [
+    {
+      "title": "Baseline 改变量图",
+      "file": "baseline_improvement.svg"
+    },
+    {
+      "title": "Baseline/模型平均指标柱状图",
+      "file": "metric_bar_smape.svg"
+    },
+    {
+      "title": "数据集-模型热力图",
+      "file": "dataset_heatmap_smape.svg"
+    },
+    {
+      "title": "多指标雷达图",
+      "file": "model_radar.svg"
+    },
+    {
+      "title": "运行时间图",
+      "file": "runtime.svg"
+    },
+    {
+      "title": "真实值-预测值散点图",
+      "file": "actual_vs_predicted.svg"
+    },
+    {
+      "title": "残差箱线图",
+      "file": "residual_boxplot.svg"
+    }
+  ],
+  "conclusions": [
+    "主指标 SMAPE 下，当前 run 的最佳模型是 tabpfn_ts，平均值为 1.574。",
+    "相对 baseline pilot_baseline，当前最佳模型在 SMAPE 上提升 71.62% （absolute=+3.971）。"
+  ]
+}

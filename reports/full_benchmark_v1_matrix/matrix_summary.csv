@@ -1,0 +1,6 @@
+run,context,horizon,best_model,best_smape,tabpfn_smape,tabpfn_rank
+full_benchmark_v1_c48_h12_s2,48,12,tabpfn_ts,1.5735846162670095,1.5735846162670095,1
+full_benchmark_v1_c96_h12_s2,96,12,tabpfn_ts,0.994726657680984,0.994726657680984,1
+full_benchmark_v1_c96_h24_s2,96,24,tabpfn_ts,1.80302029414626,1.80302029414626,1
+full_benchmark_v1_c192_h12_s2,192,12,xgboost_ar,0.5926245896038262,0.6649984356965899,3
+full_benchmark_v1_c192_h24_s2,192,24,ridge_ar,0.47735473672171425,2.158370833722838,3
