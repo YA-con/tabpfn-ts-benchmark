@@ -1,5 +1,47 @@
 # Model Setup Notes
 
+## Execution policy
+
+Run experiments on the least busy available server among `A00` and `4080s`.
+Before launching any GPU run, check both machines and pick the one with lower
+GPU utilization, enough free memory, and no obvious conflict with other users:
+
+```bash
+scripts/check_experiment_hosts.sh
+```
+
+Keep project state aligned on both machines before and after substantial runs:
+
+```bash
+scripts/sync_experiment_hosts.sh
+```
+
+To sync only one side:
+
+```bash
+scripts/sync_experiment_hosts.sh A00
+scripts/sync_experiment_hosts.sh 4080s
+```
+
+`4080s` currently resolves to:
+
+```text
+zhangyao@10.46.18.55
+project: /home/zhangyao/zy_test/tabpfn-ts-benchmark
+checkpoint: /home/zhangyao/zy_test/tabpfn_weights/tabpfn-v3-regressor-v3_20260506_timeseries.ckpt
+```
+
+`A00` currently uses:
+
+```text
+wanyi@114.214.255.146:23333
+project: /home/wanyi/zy_test/tabpfn-ts-benchmark
+checkpoint: /home/wanyi/zy_test/tabpfn_weights/tabpfn-v3-regressor-v3_20260506_timeseries.ckpt
+```
+
+Do not launch experiments if all candidate GPUs are actively occupied. In that
+case, sync files only and wait for a clearer GPU.
+
 ## A00 execution
 
 Run experiments on `A00` under:
