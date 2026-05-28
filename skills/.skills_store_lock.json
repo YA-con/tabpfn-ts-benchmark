@@ -7,6 +7,13 @@
       "source": "community",
       "version": "1.0.1",
       "installedAt": "2026-05-28T12:08:48Z"
+    },
+    "self-improving-agent": {
+      "name": "self-improving-agent",
+      "zip_url": "https://api.skillhub.cn/api/v1/download?slug=self-improving-agent",
+      "source": "community",
+      "version": "1.0.11",
+      "installedAt": "2026-05-28T12:31:37Z"
     }
   }
 }
