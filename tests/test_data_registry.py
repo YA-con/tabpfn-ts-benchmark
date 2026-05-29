@@ -112,3 +112,20 @@ def test_load_public_benchmark_csv(tmp_path: Path) -> None:
     assert len(loaded) == 4
     assert set(loaded["unique_id"]) == {"demo/target_a", "demo/target_b"}
     assert loaded["y"].sum() == pytest.approx(10.0)
+
+
+def test_load_public_benchmark_csv_consolidates_duplicate_timestamps(tmp_path: Path) -> None:
+    """Public benchmark mirrors can contain duplicate rows for the same timestamp."""
+
+    path = tmp_path / "wide_with_duplicates.csv"
+    pd.DataFrame(
+        {
+            "date": ["2024-01-01", "2024-01-01", "2024-01-02"],
+            "target_a": [1.0, 3.0, 5.0],
+        }
+    ).to_csv(path, index=False)
+
+    loaded = load_public_benchmark_csv(path, dataset_name="demo")
+
+    assert len(loaded) == 2
+    assert loaded["y"].tolist() == [2.0, 5.0]

@@ -104,4 +104,7 @@ def load_public_benchmark_csv(
     long_df["unique_id"] = dataset_name + "/" + long_df["unique_id"].astype(str)
     long_df = long_df.rename(columns={date_column: "ds"})
     long_df["ds"] = pd.to_datetime(long_df["ds"])
+    # Some public benchmark mirrors contain duplicate timestamp rows. Keep the
+    # schema strict downstream by consolidating exact duplicate series points.
+    long_df = long_df.groupby(["unique_id", "ds"], as_index=False)["y"].mean()
     return validate_nixtla_frame(long_df[["unique_id", "ds", "y"]].sort_values(["unique_id", "ds"]))
